@@ -39,7 +39,7 @@ export default function Auth() {
           <div className="mx-auto w-12 h-12 rounded-xl bg-primary flex items-center justify-center">
             <Briefcase className="h-6 w-6 text-primary-foreground" />
           </div>
-          <CardTitle className="text-2xl font-bold">MeuERP</CardTitle>
+          <CardTitle className="text-2xl font-bold">GereNow</CardTitle>
           <p className="text-muted-foreground text-sm">
             {isLogin ? "Entre na sua conta" : "Crie sua conta gratuita"}
           </p>
