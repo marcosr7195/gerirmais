@@ -2,6 +2,7 @@ import { LayoutDashboard, DollarSign, Handshake, ClipboardList, LogOut } from "l
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import iconG from "@/assets/icon-g.png";
 import {
   Sidebar,
   SidebarContent,
