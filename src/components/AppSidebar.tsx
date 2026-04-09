@@ -33,9 +33,7 @@ export function AppSidebar() {
       <SidebarContent>
         <div className={`p-4 ${collapsed ? "px-2" : ""}`}>
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-sidebar-primary flex items-center justify-center shrink-0">
-              <span className="text-sidebar-primary-foreground font-bold text-sm">G</span>
-            </div>
+            <img src={iconG} alt="GereNow" className="w-8 h-8 rounded-lg shrink-0" />
             {!collapsed && (
               <div className="min-w-0">
                 <p className="text-sidebar-primary-foreground font-semibold text-sm truncate">GereNow</p>
