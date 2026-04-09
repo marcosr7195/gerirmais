@@ -42,7 +42,7 @@ export default function Onboarding() {
     if (error) {
       toast.error("Erro ao salvar. Tente novamente.");
     } else {
-      toast.success("Bem-vindo ao MeuERP!");
+      toast.success("Bem-vindo ao GereNow!");
       await refreshProfile();
     }
     setLoading(false);
