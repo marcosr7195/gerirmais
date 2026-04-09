@@ -37,7 +37,7 @@ export function AppSidebar() {
             </div>
             {!collapsed && (
               <div className="min-w-0">
-                <p className="text-sidebar-primary-foreground font-semibold text-sm truncate">MeuERP</p>
+                <p className="text-sidebar-primary-foreground font-semibold text-sm truncate">GereNow</p>
                 <p className="text-sidebar-foreground/60 text-xs truncate">{profile?.business_name || "Meu Negócio"}</p>
               </div>
             )}
