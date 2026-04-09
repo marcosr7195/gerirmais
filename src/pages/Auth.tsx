@@ -35,7 +35,12 @@ export default function Auth() {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md animate-fade-in">
         <CardHeader className="text-center space-y-2">
-          <img src={logoCompleta} alt="GereNow" className="mx-auto h-10 object-contain" />
+          <div className="flex items-center justify-center gap-2">
+            <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
+              <span className="text-primary-foreground font-bold text-lg">G</span>
+            </div>
+            <span className="text-xl font-semibold text-foreground">GereNow</span>
+          </div>
           <p className="text-muted-foreground text-sm">
             {isLogin ? "Entre na sua conta" : "Crie sua conta gratuita"}
           </p>
