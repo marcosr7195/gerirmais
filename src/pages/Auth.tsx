@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
+import iconG from "@/assets/icon-g.png";
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
