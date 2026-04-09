@@ -140,7 +140,7 @@ export default function Entregas() {
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Entregas</h1>
+          <h1 className="text-2xl font-bold">Operação</h1>
           <p className="text-muted-foreground">Ordens de serviço e checklists</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
