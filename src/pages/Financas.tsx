@@ -28,6 +28,7 @@ interface Transaction {
 interface Category {
   id: string;
   name: string;
+  type: string;
 }
 
 export default function Financas() {
@@ -41,6 +42,7 @@ export default function Financas() {
   const [editCatName, setEditCatName] = useState("");
   const [deletingCat, setDeletingCat] = useState<Category | null>(null);
   const [form, setForm] = useState({ type: "receita", category: "", description: "", amount: "", date: new Date().toISOString().slice(0, 10), status: "pendente", due_date: "" });
+  const [newCatType, setNewCatType] = useState("despesa");
   const [filter, setFilter] = useState("todos");
 
   useEffect(() => { if (user) { load(); loadCategories(); } }, [user]);
@@ -52,7 +54,27 @@ export default function Financas() {
 
   const loadCategories = async () => {
     const { data } = await supabase.from("categories").select("*").eq("user_id", user!.id).order("name");
-    setCategories(data || []);
+    const cats = data || [];
+    // Seed default categories if user has none
+    if (cats.length === 0 && user) {
+      const defaults = [
+        { name: "Consultoria", type: "receita" }, { name: "Mentoria", type: "receita" },
+        { name: "Contrato Recorrente", type: "receita" }, { name: "Serviço Avulso", type: "receita" },
+        { name: "Comissão", type: "receita" }, { name: "Produto Digital", type: "receita" },
+        { name: "Outros Recebimentos", type: "receita" },
+        { name: "Ferramentas e Software", type: "despesa" }, { name: "Marketing e Tráfego", type: "despesa" },
+        { name: "Domínio e Hospedagem", type: "despesa" }, { name: "Telefone e Internet", type: "despesa" },
+        { name: "Coworking e Escritório", type: "despesa" }, { name: "Pró-labore", type: "despesa" },
+        { name: "Freelancer e Parceiro", type: "despesa" }, { name: "Capacitação", type: "despesa" },
+        { name: "Impostos e Taxas", type: "despesa" }, { name: "Contador", type: "despesa" },
+        { name: "Despesa Variável", type: "despesa" }, { name: "Investimento", type: "despesa" },
+      ];
+      await supabase.from("categories").insert(defaults.map(d => ({ ...d, user_id: user.id })));
+      const { data: seeded } = await supabase.from("categories").select("*").eq("user_id", user.id).order("name");
+      setCategories(seeded || []);
+      return;
+    }
+    setCategories(cats);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -84,7 +106,7 @@ export default function Financas() {
 
   const addCategory = async () => {
     if (!newCatName.trim()) return;
-    const { error } = await supabase.from("categories").insert({ user_id: user!.id, name: newCatName.trim() });
+    const { error } = await supabase.from("categories").insert({ user_id: user!.id, name: newCatName.trim(), type: newCatType });
     if (error) { toast.error("Erro ao criar categoria"); return; }
     toast.success("Categoria criada!");
     setNewCatName("");
@@ -132,7 +154,9 @@ export default function Financas() {
   const statusLabel: Record<string, string> = { pendente: "Pendente", pago: "Pago", recebido: "Recebido" };
   const statusColor: Record<string, string> = { pendente: "secondary", pago: "default", recebido: "default" };
 
-  const allCategoryNames = categories.map(c => c.name);
+  const receitaCats = categories.filter(c => c.type === "receita");
+  const despesaCats = categories.filter(c => c.type === "despesa");
+  const filteredCats = form.type === "receita" ? receitaCats : despesaCats;
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -150,31 +174,46 @@ export default function Financas() {
               <DialogHeader><DialogTitle>Gerenciar Categorias</DialogTitle></DialogHeader>
               <div className="space-y-4">
                 <div className="flex gap-2">
-                  <Input placeholder="Nova categoria" value={newCatName} onChange={e => setNewCatName(e.target.value)} onKeyDown={e => e.key === "Enter" && addCategory()} />
+                  <Input placeholder="Nova categoria" value={newCatName} onChange={e => setNewCatName(e.target.value)} onKeyDown={e => e.key === "Enter" && addCategory()} className="flex-1" />
+                  <Select value={newCatType} onValueChange={setNewCatType}>
+                    <SelectTrigger className="w-28"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="receita">Receita</SelectItem>
+                      <SelectItem value="despesa">Despesa</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <Button onClick={addCategory}><Plus className="h-4 w-4" /></Button>
                 </div>
-                <div className="space-y-2 max-h-60 overflow-y-auto">
-                  {categories.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">Nenhuma categoria cadastrada</p>}
-                  {categories.map(cat => (
-                    <div key={cat.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50">
-                      {editingCat?.id === cat.id ? (
-                        <div className="flex gap-2 flex-1">
-                          <Input value={editCatName} onChange={e => setEditCatName(e.target.value)} onKeyDown={e => e.key === "Enter" && updateCategory()} />
-                          <Button size="sm" onClick={updateCategory}>Salvar</Button>
-                          <Button size="sm" variant="ghost" onClick={() => setEditingCat(null)}>Cancelar</Button>
-                        </div>
-                      ) : (
-                        <>
-                          <span className="text-sm">{cat.name}</span>
-                          <div className="flex gap-1">
-                            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => { setEditingCat(cat); setEditCatName(cat.name); }}><Pencil className="h-3 w-3" /></Button>
-                            <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={() => setDeletingCat(cat)}><Trash2 className="h-3 w-3" /></Button>
+                {["receita", "despesa"].map(tipo => {
+                  const cats = tipo === "receita" ? receitaCats : despesaCats;
+                  return (
+                    <div key={tipo}>
+                      <p className="text-xs font-semibold uppercase text-muted-foreground mb-1">{tipo === "receita" ? "Receitas" : "Despesas"}</p>
+                      <div className="space-y-1 max-h-40 overflow-y-auto">
+                        {cats.length === 0 && <p className="text-xs text-muted-foreground text-center py-2">Nenhuma</p>}
+                        {cats.map(cat => (
+                          <div key={cat.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50">
+                            {editingCat?.id === cat.id ? (
+                              <div className="flex gap-2 flex-1">
+                                <Input value={editCatName} onChange={e => setEditCatName(e.target.value)} onKeyDown={e => e.key === "Enter" && updateCategory()} />
+                                <Button size="sm" onClick={updateCategory}>Salvar</Button>
+                                <Button size="sm" variant="ghost" onClick={() => setEditingCat(null)}>Cancelar</Button>
+                              </div>
+                            ) : (
+                              <>
+                                <span className="text-sm">{cat.name}</span>
+                                <div className="flex gap-1">
+                                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => { setEditingCat(cat); setEditCatName(cat.name); }}><Pencil className="h-3 w-3" /></Button>
+                                  <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={() => setDeletingCat(cat)}><Trash2 className="h-3 w-3" /></Button>
+                                </div>
+                              </>
+                            )}
                           </div>
-                        </>
-                      )}
+                        ))}
+                      </div>
                     </div>
-                  ))}
-                </div>
+                  );
+                })}
               </div>
             </DialogContent>
           </Dialog>
@@ -202,7 +241,7 @@ export default function Financas() {
                     <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
                       <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                       <SelectContent>
-                        {allCategoryNames.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                        {filteredCats.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
