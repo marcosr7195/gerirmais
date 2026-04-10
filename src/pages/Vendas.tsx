@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,14 +9,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, UserPlus, GripVertical } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Plus, UserPlus, Pencil } from "lucide-react";
 import { toast } from "sonner";
 
 interface Client { id: string; name: string; email: string | null; phone: string | null; origin: string | null; }
 interface DealItem { id?: string; description: string; quantity: number; unit_price: number; }
 interface Deal {
   id: string; title: string; stage: string; value: number; client_id: string | null;
-  notes: string | null; clients?: Client | null; items?: DealItem[];
+  notes: string | null; fixed_value: boolean; os_created: boolean; clients?: Client | null; items?: DealItem[];
 }
 
 const stages = [
@@ -33,6 +34,9 @@ export default function Vendas() {
   const [tab, setTab] = useState("pipeline");
   const [dealOpen, setDealOpen] = useState(false);
   const [clientOpen, setClientOpen] = useState(false);
+  const [editDeal, setEditDeal] = useState<Deal | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const [isFixedValue, setIsFixedValue] = useState(false);
   const [dealForm, setDealForm] = useState({ title: "", client_id: "", stage: "lead", value: "", notes: "" });
   const [dealItems, setDealItems] = useState<DealItem[]>([{ description: "", quantity: 1, unit_price: 0 }]);
   const [clientForm, setClientForm] = useState({ name: "", email: "", phone: "", origin: "" });
@@ -41,7 +45,7 @@ export default function Vendas() {
 
   const loadDeals = async () => {
     const { data } = await supabase.from("deals").select("*, clients(*)").eq("user_id", user!.id).order("created_at", { ascending: false });
-    setDeals((data || []).map(d => ({ ...d, value: Number(d.value), clients: d.clients as any })));
+    setDeals((data || []).map(d => ({ ...d, value: Number(d.value), fixed_value: !!(d as any).fixed_value, os_created: !!(d as any).os_created, clients: d.clients as any })));
   };
 
   const loadClients = async () => {
@@ -51,35 +55,39 @@ export default function Vendas() {
 
   const saveDeal = async (e: React.FormEvent) => {
     e.preventDefault();
-    const total = dealItems.reduce((a, i) => a + i.quantity * i.unit_price, 0);
+    const total = isFixedValue ? (parseFloat(dealForm.value) || 0) : dealItems.reduce((a, i) => a + i.quantity * i.unit_price, 0);
     const { data, error } = await supabase.from("deals").insert({
       user_id: user!.id,
       title: dealForm.title,
       client_id: dealForm.client_id || null,
       stage: dealForm.stage,
-      value: total || parseFloat(dealForm.value) || 0,
+      value: total,
+      fixed_value: isFixedValue,
       notes: dealForm.notes || null,
-    }).select().single();
+    } as any).select().single();
 
     if (error) { toast.error("Erro ao criar negócio"); return; }
 
-    const validItems = dealItems.filter(i => i.description.trim());
-    if (validItems.length > 0) {
-      await supabase.from("deal_items").insert(validItems.map(i => ({
-        user_id: user!.id, deal_id: data.id, description: i.description,
-        quantity: i.quantity, unit_price: i.unit_price,
-      })));
+    if (!isFixedValue) {
+      const validItems = dealItems.filter(i => i.description.trim());
+      if (validItems.length > 0) {
+        await supabase.from("deal_items").insert(validItems.map(i => ({
+          user_id: user!.id, deal_id: data.id, description: i.description,
+          quantity: i.quantity, unit_price: i.unit_price,
+        })));
+      }
     }
 
-    // If stage is "fechado", auto-create OS
     if (dealForm.stage === "fechado") {
       await createServiceOrder(data.id, dealForm.title, dealForm.client_id || null);
+      await supabase.from("deals").update({ os_created: true } as any).eq("id", data.id);
     }
 
     toast.success("Negócio criado!");
     setDealOpen(false);
     setDealForm({ title: "", client_id: "", stage: "lead", value: "", notes: "" });
     setDealItems([{ description: "", quantity: 1, unit_price: 0 }]);
+    setIsFixedValue(false);
     loadDeals();
   };
 
@@ -95,13 +103,51 @@ export default function Vendas() {
   };
 
   const moveStage = async (dealId: string, newStage: string) => {
-    await supabase.from("deals").update({ stage: newStage }).eq("id", dealId);
-    if (newStage === "fechado") {
-      const deal = deals.find(d => d.id === dealId);
-      if (deal) await createServiceOrder(dealId, deal.title, deal.client_id);
+    const deal = deals.find(d => d.id === dealId);
+    if (!deal) return;
+
+    const updateData: any = { stage: newStage };
+
+    if (newStage === "fechado" && !deal.os_created) {
+      await createServiceOrder(dealId, deal.title, deal.client_id);
+      updateData.os_created = true;
     }
+
+    await supabase.from("deals").update(updateData).eq("id", dealId);
     loadDeals();
     toast.success("Negócio atualizado!");
+  };
+
+  const openEdit = (deal: Deal) => {
+    setEditDeal(deal);
+    setEditOpen(true);
+  };
+
+  const saveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editDeal) return;
+
+    const updateData: any = {
+      title: editDeal.title,
+      client_id: editDeal.client_id || null,
+      stage: editDeal.stage,
+      value: editDeal.value,
+      fixed_value: editDeal.fixed_value,
+      notes: editDeal.notes || null,
+    };
+
+    const oldDeal = deals.find(d => d.id === editDeal.id);
+
+    if (editDeal.stage === "fechado" && !editDeal.os_created) {
+      await createServiceOrder(editDeal.id, editDeal.title, editDeal.client_id);
+      updateData.os_created = true;
+    }
+
+    await supabase.from("deals").update(updateData).eq("id", editDeal.id);
+    toast.success("Negócio atualizado!");
+    setEditOpen(false);
+    setEditDeal(null);
+    loadDeals();
   };
 
   const saveClient = async (e: React.FormEvent) => {
@@ -173,20 +219,35 @@ export default function Vendas() {
                     </Select>
                   </div>
                 </div>
-                <div>
-                  <Label className="mb-2 block">Itens do orçamento</Label>
-                  <div className="space-y-2">
-                    {dealItems.map((item, i) => (
-                      <div key={i} className="grid grid-cols-12 gap-2">
-                        <Input className="col-span-6" placeholder="Descrição" value={item.description} onChange={e => updateItem(i, "description", e.target.value)} />
-                        <Input className="col-span-2" type="number" placeholder="Qtd" value={item.quantity} onChange={e => updateItem(i, "quantity", Number(e.target.value))} />
-                        <Input className="col-span-4" type="number" step="0.01" placeholder="Preço" value={item.unit_price} onChange={e => updateItem(i, "unit_price", Number(e.target.value))} />
-                      </div>
-                    ))}
-                  </div>
-                  <Button type="button" variant="ghost" size="sm" className="mt-2" onClick={addItem}><Plus className="h-3 w-3 mr-1" />Adicionar item</Button>
-                  <p className="text-sm font-medium mt-2">Total: {fmt(total)}</p>
+
+                <div className="flex items-center gap-3">
+                  <Switch checked={isFixedValue} onCheckedChange={setIsFixedValue} />
+                  <Label>Valor fixo do contrato</Label>
                 </div>
+
+                {isFixedValue ? (
+                  <div className="space-y-2">
+                    <Label>Valor total do contrato</Label>
+                    <Input type="number" step="0.01" placeholder="Ex: 5000.00" value={dealForm.value} onChange={e => setDealForm({ ...dealForm, value: e.target.value })} />
+                  </div>
+                ) : (
+                  <div>
+                    <Label className="mb-2 block">Itens do orçamento</Label>
+                    <div className="space-y-2">
+                      {dealItems.map((item, i) => (
+                        <div key={i} className="grid grid-cols-12 gap-2">
+                          <Input className="col-span-6" placeholder="Descrição" value={item.description} onChange={e => updateItem(i, "description", e.target.value)} />
+                          <Input className="col-span-2" type="number" placeholder="Qtd" value={item.quantity} onChange={e => updateItem(i, "quantity", Number(e.target.value))} />
+                          <Input className="col-span-4" type="number" step="0.01" placeholder="Preço" value={item.unit_price} onChange={e => updateItem(i, "unit_price", Number(e.target.value))} />
+                        </div>
+                      ))}
+                    </div>
+                    <Button type="button" variant="ghost" size="sm" className="mt-2" onClick={addItem}><Plus className="h-3 w-3 mr-1" />Adicionar item</Button>
+                    <p className="text-sm font-medium mt-2">Total: {fmt(total)}</p>
+                  </div>
+                )}
+
+                <div className="space-y-2"><Label>Observações</Label><Input value={dealForm.notes} onChange={e => setDealForm({ ...dealForm, notes: e.target.value })} /></div>
                 <Button type="submit" className="w-full">Criar negócio</Button>
               </form>
             </DialogContent>
@@ -212,11 +273,17 @@ export default function Vendas() {
                   </div>
                   <div className="space-y-2 min-h-[100px]">
                     {stageDeals.map(deal => (
-                      <Card key={deal.id} className="glass-card">
+                      <Card key={deal.id} className="glass-card group">
                         <CardContent className="p-3 space-y-2">
-                          <p className="text-sm font-medium">{deal.title}</p>
+                          <div className="flex items-start justify-between">
+                            <p className="text-sm font-medium">{deal.title}</p>
+                            <Button variant="ghost" size="sm" className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => openEdit(deal)}>
+                              <Pencil className="h-3 w-3" />
+                            </Button>
+                          </div>
                           <p className="text-xs text-muted-foreground">{(deal.clients as any)?.name || "Sem cliente"}</p>
                           <p className="text-sm font-semibold text-primary">{fmt(deal.value)}</p>
+                          {deal.fixed_value && <Badge variant="secondary" className="text-[10px]">Valor fixo</Badge>}
                           <div className="flex gap-1 flex-wrap">
                             {stages.filter(s => s.key !== deal.stage).map(s => (
                               <Button key={s.key} variant="ghost" size="sm" className="text-xs h-6 px-2" onClick={() => moveStage(deal.id, s.key)}>
@@ -256,6 +323,44 @@ export default function Vendas() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Modal de edição */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader><DialogTitle>Editar negócio</DialogTitle></DialogHeader>
+          {editDeal && (
+            <form onSubmit={saveEdit} className="space-y-4">
+              <div className="space-y-2"><Label>Título *</Label><Input value={editDeal.title} onChange={e => setEditDeal({ ...editDeal, title: e.target.value })} required /></div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Cliente</Label>
+                  <Select value={editDeal.client_id || ""} onValueChange={(v) => setEditDeal({ ...editDeal, client_id: v })}>
+                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent>{clients.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Etapa</Label>
+                  <Select value={editDeal.stage} onValueChange={(v) => setEditDeal({ ...editDeal, stage: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>{stages.map(s => <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <Switch checked={editDeal.fixed_value} onCheckedChange={(v) => setEditDeal({ ...editDeal, fixed_value: v })} />
+                <Label>Valor fixo do contrato</Label>
+              </div>
+              <div className="space-y-2">
+                <Label>Valor</Label>
+                <Input type="number" step="0.01" value={editDeal.value} onChange={e => setEditDeal({ ...editDeal, value: Number(e.target.value) })} />
+              </div>
+              <div className="space-y-2"><Label>Observações</Label><Input value={editDeal.notes || ""} onChange={e => setEditDeal({ ...editDeal, notes: e.target.value })} /></div>
+              <Button type="submit" className="w-full">Salvar alterações</Button>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
