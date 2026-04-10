@@ -127,8 +127,10 @@ export type Database = {
         Row: {
           client_id: string | null
           created_at: string | null
+          fixed_value: boolean
           id: string
           notes: string | null
+          os_created: boolean
           stage: string
           title: string
           updated_at: string | null
@@ -138,8 +140,10 @@ export type Database = {
         Insert: {
           client_id?: string | null
           created_at?: string | null
+          fixed_value?: boolean
           id?: string
           notes?: string | null
+          os_created?: boolean
           stage?: string
           title: string
           updated_at?: string | null
@@ -149,8 +153,10 @@ export type Database = {
         Update: {
           client_id?: string | null
           created_at?: string | null
+          fixed_value?: boolean
           id?: string
           notes?: string | null
+          os_created?: boolean
           stage?: string
           title?: string
           updated_at?: string | null
