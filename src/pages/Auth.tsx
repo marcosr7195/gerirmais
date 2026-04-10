@@ -37,8 +37,8 @@ export default function Auth() {
       <Card className="w-full max-w-md animate-fade-in">
         <CardHeader className="text-center space-y-2">
           <div className="flex items-center justify-center gap-3">
-            <img src={iconG} alt="GereNow" className="w-10 h-10 rounded-lg" />
-            <span className="text-2xl font-bold text-foreground">GereNow</span>
+            <img src={iconG} alt="GerirMais" className="w-10 h-10 rounded-lg" />
+            <span className="text-2xl font-bold text-foreground">GerirMais</span>
           </div>
           <p className="text-muted-foreground text-sm">
             {isLogin ? "Entre na sua conta" : "Crie sua conta gratuita"}

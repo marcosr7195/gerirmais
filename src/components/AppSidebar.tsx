@@ -33,10 +33,10 @@ export function AppSidebar() {
       <SidebarContent>
         <div className={`p-4 ${collapsed ? "px-2" : ""}`}>
           <div className="flex items-center gap-2">
-            <img src={iconG} alt="GereNow" className="w-8 h-8 rounded-lg shrink-0" />
+            <img src={iconG} alt="GerirMais" className="w-8 h-8 rounded-lg shrink-0" />
             {!collapsed && (
               <div className="min-w-0">
-                <p className="text-sidebar-primary-foreground font-semibold text-sm truncate">GereNow</p>
+                <p className="text-sidebar-primary-foreground font-semibold text-sm truncate">GerirMais</p>
                 <p className="text-sidebar-foreground/60 text-xs truncate">{profile?.business_name || "Meu Negócio"}</p>
               </div>
             )}
