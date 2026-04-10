@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      categories: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       checklist_items: {
         Row: {
           completed: boolean | null
@@ -269,6 +290,7 @@ export type Database = {
           description: string
           due_date: string | null
           id: string
+          paid_at: string | null
           service_order_id: string | null
           status: string | null
           type: string
@@ -283,6 +305,7 @@ export type Database = {
           description: string
           due_date?: string | null
           id?: string
+          paid_at?: string | null
           service_order_id?: string | null
           status?: string | null
           type: string
@@ -297,6 +320,7 @@ export type Database = {
           description?: string
           due_date?: string | null
           id?: string
+          paid_at?: string | null
           service_order_id?: string | null
           status?: string | null
           type?: string
