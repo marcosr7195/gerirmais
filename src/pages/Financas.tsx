@@ -44,6 +44,8 @@ export default function Financas() {
   const [form, setForm] = useState({ type: "receita", category: "", description: "", amount: "", date: new Date().toISOString().slice(0, 10), status: "pendente", due_date: "" });
   const [newCatType, setNewCatType] = useState("despesa");
   const [filter, setFilter] = useState("todos");
+  const [statusFilter, setStatusFilter] = useState("todos");
+  const [baixaTx, setBaixaTx] = useState<Transaction | null>(null);
 
   useEffect(() => { if (user) { load(); loadCategories(); } }, [user]);
 
@@ -55,7 +57,6 @@ export default function Financas() {
   const loadCategories = async () => {
     const { data } = await supabase.from("categories").select("*").eq("user_id", user!.id).order("name");
     const cats = data || [];
-    // Seed default categories if user has none
     if (cats.length === 0 && user) {
       const defaults = [
         { name: "Consultoria", type: "receita" }, { name: "Mentoria", type: "receita" },
@@ -97,10 +98,19 @@ export default function Financas() {
     load();
   };
 
-  const darBaixa = async (tx: Transaction) => {
-    const newStatus = tx.type === "receita" ? "recebido" : "pago";
-    await supabase.from("transactions").update({ status: newStatus, paid_at: new Date().toISOString() }).eq("id", tx.id);
+  const darBaixa = async () => {
+    if (!baixaTx) return;
+    const newStatus = baixaTx.type === "receita" ? "recebido" : "pago";
+    await supabase.from("transactions").update({ status: newStatus, paid_at: new Date().toISOString() }).eq("id", baixaTx.id);
     toast.success("Baixa realizada!");
+    setBaixaTx(null);
+    load();
+  };
+
+  const updateStatus = async (tx: Transaction, newStatus: string) => {
+    const paid_at = newStatus === "pago" || newStatus === "recebido" ? new Date().toISOString() : null;
+    await supabase.from("transactions").update({ status: newStatus, paid_at }).eq("id", tx.id);
+    toast.success("Status atualizado!");
     load();
   };
 
@@ -135,7 +145,13 @@ export default function Financas() {
   const totalDespesa = transactions.filter(t => t.type === "despesa").reduce((a, t) => a + t.amount, 0);
   const saldo = totalReceita - totalDespesa;
 
-  const filtered = filter === "todos" ? transactions : transactions.filter(t => t.type === filter);
+  // Apply both type and status filters
+  let filtered = filter === "todos" ? transactions : transactions.filter(t => t.type === filter);
+  if (statusFilter === "pendente") {
+    filtered = filtered.filter(t => t.status === "pendente");
+  } else if (statusFilter === "concluido") {
+    filtered = filtered.filter(t => t.status === "pago" || t.status === "recebido");
+  }
 
   const now = new Date();
   const chartData = [];
@@ -152,7 +168,6 @@ export default function Financas() {
   }
 
   const statusLabel: Record<string, string> = { pendente: "Pendente", pago: "Pago", recebido: "Recebido" };
-  const statusColor: Record<string, string> = { pendente: "secondary", pago: "default", recebido: "default" };
 
   const receitaCats = categories.filter(c => c.type === "receita");
   const despesaCats = categories.filter(c => c.type === "despesa");
@@ -228,7 +243,7 @@ export default function Financas() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Tipo</Label>
-                    <Select value={form.type} onValueChange={(v) => setForm({ ...form, type: v })}>
+                    <Select value={form.type} onValueChange={(v) => setForm({ ...form, type: v, category: "" })}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="receita">Receita</SelectItem>
@@ -312,16 +327,26 @@ export default function Financas() {
 
       <Card className="glass-card">
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-2">
             <CardTitle className="text-base">Lançamentos</CardTitle>
-            <Select value={filter} onValueChange={setFilter}>
-              <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos</SelectItem>
-                <SelectItem value="receita">Receitas</SelectItem>
-                <SelectItem value="despesa">Despesas</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex gap-2">
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos status</SelectItem>
+                  <SelectItem value="pendente">Pendentes</SelectItem>
+                  <SelectItem value="concluido">Recebidos/Pagos</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={filter} onValueChange={setFilter}>
+                <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos tipos</SelectItem>
+                  <SelectItem value="receita">Receitas</SelectItem>
+                  <SelectItem value="despesa">Despesas</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -329,31 +354,46 @@ export default function Financas() {
             <p className="text-center text-muted-foreground py-8">Nenhum lançamento encontrado</p>
           ) : (
             <div className="space-y-2">
-              {filtered.map(tx => (
-                <div key={tx.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-2 h-2 rounded-full ${tx.type === "receita" ? "bg-success" : "bg-destructive"}`} />
-                    <div>
-                      <p className="text-sm font-medium">{tx.description}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {tx.category} · {new Date(tx.date + "T12:00:00").toLocaleDateString("pt-BR")}
-                        {tx.paid_at && ` · Pago em ${new Date(tx.paid_at).toLocaleDateString("pt-BR")}`}
-                      </p>
+              {filtered.map(tx => {
+                const isPending = tx.status === "pendente";
+                const statusBadgeClass = isPending
+                  ? "bg-yellow-500/15 text-yellow-600 border-yellow-500/30"
+                  : "bg-emerald-500/15 text-emerald-600 border-emerald-500/30";
+
+                return (
+                  <div key={tx.id} className={`flex items-center justify-between p-3 rounded-lg transition-colors ${isPending ? "bg-yellow-500/5 hover:bg-yellow-500/10 border border-yellow-500/20" : "hover:bg-muted/50"}`}>
+                    <div className="flex items-center gap-3">
+                      <div className={`w-2 h-2 rounded-full ${tx.type === "receita" ? "bg-success" : "bg-destructive"}`} />
+                      <div>
+                        <p className="text-sm font-medium">{tx.description}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {tx.category} · {new Date(tx.date + "T12:00:00").toLocaleDateString("pt-BR")}
+                          {tx.paid_at && ` · ${tx.type === "receita" ? "Recebido" : "Pago"} em ${new Date(tx.paid_at).toLocaleDateString("pt-BR")}`}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {isPending && (
+                        <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setBaixaTx(tx)}>
+                          <CheckCircle className="h-3 w-3 mr-1" />Dar baixa
+                        </Button>
+                      )}
+                      <Select value={tx.status || "pendente"} onValueChange={(v) => updateStatus(tx, v)}>
+                        <SelectTrigger className={`h-7 w-auto min-w-[100px] text-xs border ${statusBadgeClass}`}>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="pendente">Pendente</SelectItem>
+                          <SelectItem value={tx.type === "receita" ? "recebido" : "pago"}>{tx.type === "receita" ? "Recebido" : "Pago"}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <span className={`text-sm font-semibold ${tx.type === "receita" ? "text-success" : "text-destructive"}`}>
+                        {tx.type === "receita" ? "+" : "-"}{fmt(tx.amount)}
+                      </span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    {tx.status === "pendente" && (
-                      <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => darBaixa(tx)}>
-                        <CheckCircle className="h-3 w-3 mr-1" />Dar baixa
-                      </Button>
-                    )}
-                    <Badge variant={statusColor[tx.status || "pendente"] as any}>{statusLabel[tx.status || "pendente"]}</Badge>
-                    <span className={`text-sm font-semibold ${tx.type === "receita" ? "text-success" : "text-destructive"}`}>
-                      {tx.type === "receita" ? "+" : "-"}{fmt(tx.amount)}
-                    </span>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </CardContent>
@@ -369,6 +409,26 @@ export default function Financas() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={deleteCategory}>Excluir</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Alert dialog for dar baixa confirmation */}
+      <AlertDialog open={!!baixaTx} onOpenChange={(o) => !o && setBaixaTx(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{baixaTx?.type === "receita" ? "Confirmar recebimento" : "Confirmar pagamento"}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {baixaTx?.type === "receita"
+                ? `Confirmar recebimento de ${baixaTx ? fmt(baixaTx.amount) : ""}?`
+                : `Confirmar pagamento de ${baixaTx ? fmt(baixaTx.amount) : ""}?`}
+              <br />
+              <span className="text-muted-foreground">{baixaTx?.description}</span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={darBaixa}>Confirmar</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
