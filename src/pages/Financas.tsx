@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,8 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
-import { Plus, DollarSign, TrendingUp, TrendingDown, Settings, Pencil, Trash2, CheckCircle } from "lucide-react";
+import { Plus, DollarSign, TrendingUp, TrendingDown, Settings, Pencil, Trash2, CheckCircle, Clock } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { toast } from "sonner";
 
@@ -31,6 +30,44 @@ interface Category {
   type: string;
 }
 
+type PeriodKey = "todos" | "hoje" | "semana" | "mes" | "mes_anterior" | "ano" | "personalizado";
+
+function getPeriodRange(key: PeriodKey): { start: string; end: string } | null {
+  if (key === "todos") return null;
+  const now = new Date();
+  const fmt = (d: Date) => d.toISOString().slice(0, 10);
+
+  if (key === "hoje") {
+    const s = fmt(now);
+    return { start: s, end: s };
+  }
+  if (key === "semana") {
+    const day = now.getDay();
+    const diff = day === 0 ? 6 : day - 1;
+    const mon = new Date(now);
+    mon.setDate(now.getDate() - diff);
+    const sun = new Date(mon);
+    sun.setDate(mon.getDate() + 6);
+    return { start: fmt(mon), end: fmt(sun) };
+  }
+  if (key === "mes") {
+    const start = new Date(now.getFullYear(), now.getMonth(), 1);
+    const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    return { start: fmt(start), end: fmt(end) };
+  }
+  if (key === "mes_anterior") {
+    const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const end = new Date(now.getFullYear(), now.getMonth(), 0);
+    return { start: fmt(start), end: fmt(end) };
+  }
+  if (key === "ano") {
+    const start = new Date(now.getFullYear(), 0, 1);
+    const end = new Date(now.getFullYear(), 11, 31);
+    return { start: fmt(start), end: fmt(end) };
+  }
+  return null;
+}
+
 export default function Financas() {
   const { user } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -45,6 +82,10 @@ export default function Financas() {
   const [newCatType, setNewCatType] = useState("despesa");
   const [filter, setFilter] = useState("todos");
   const [statusFilter, setStatusFilter] = useState("todos");
+  const [categoryFilter, setCategoryFilter] = useState("todos");
+  const [periodFilter, setPeriodFilter] = useState<PeriodKey>("mes");
+  const [customStart, setCustomStart] = useState("");
+  const [customEnd, setCustomEnd] = useState("");
   const [baixaTx, setBaixaTx] = useState<Transaction | null>(null);
 
   useEffect(() => { if (user) { load(); loadCategories(); } }, [user]);
@@ -81,14 +122,9 @@ export default function Financas() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const { error } = await supabase.from("transactions").insert({
-      user_id: user!.id,
-      type: form.type,
-      category: form.category || null,
-      description: form.description,
-      amount: parseFloat(form.amount),
-      date: form.date,
-      status: form.status,
-      due_date: form.due_date || null,
+      user_id: user!.id, type: form.type, category: form.category || null,
+      description: form.description, amount: parseFloat(form.amount), date: form.date,
+      status: form.status, due_date: form.due_date || null,
       paid_at: form.status === "pago" || form.status === "recebido" ? new Date().toISOString() : null,
     });
     if (error) { toast.error("Erro ao salvar"); return; }
@@ -141,37 +177,66 @@ export default function Financas() {
 
   const fmt = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-  const totalReceita = transactions.filter(t => t.type === "receita").reduce((a, t) => a + t.amount, 0);
-  const totalDespesa = transactions.filter(t => t.type === "despesa").reduce((a, t) => a + t.amount, 0);
+  // Combined filtering
+  const filtered = useMemo(() => {
+    let result = transactions;
+
+    // Period filter
+    if (periodFilter === "personalizado" && customStart && customEnd) {
+      result = result.filter(t => t.date >= customStart && t.date <= customEnd);
+    } else if (periodFilter !== "todos") {
+      const range = getPeriodRange(periodFilter);
+      if (range) result = result.filter(t => t.date >= range.start && t.date <= range.end);
+    }
+
+    // Type filter
+    if (filter !== "todos") result = result.filter(t => t.type === filter);
+
+    // Status filter
+    if (statusFilter === "pendente") result = result.filter(t => t.status === "pendente");
+    else if (statusFilter === "concluido") result = result.filter(t => t.status === "pago" || t.status === "recebido");
+
+    // Category filter
+    if (categoryFilter !== "todos") result = result.filter(t => t.category === categoryFilter);
+
+    return result;
+  }, [transactions, filter, statusFilter, categoryFilter, periodFilter, customStart, customEnd]);
+
+  // Summary cards based on filtered data
+  const totalReceita = filtered.filter(t => t.type === "receita").reduce((a, t) => a + t.amount, 0);
+  const totalDespesa = filtered.filter(t => t.type === "despesa").reduce((a, t) => a + t.amount, 0);
   const saldo = totalReceita - totalDespesa;
+  const totalPendente = filtered.filter(t => t.status === "pendente").reduce((a, t) => a + t.amount, 0);
 
-  // Apply both type and status filters
-  let filtered = filter === "todos" ? transactions : transactions.filter(t => t.type === filter);
-  if (statusFilter === "pendente") {
-    filtered = filtered.filter(t => t.status === "pendente");
-  } else if (statusFilter === "concluido") {
-    filtered = filtered.filter(t => t.status === "pago" || t.status === "recebido");
-  }
-
-  const now = new Date();
-  const chartData = [];
-  for (let i = 5; i >= 0; i--) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-    const label = d.toLocaleDateString("pt-BR", { month: "short" });
-    const monthTx = transactions.filter(t => t.date?.startsWith(key));
-    chartData.push({
-      month: label,
-      receita: monthTx.filter(t => t.type === "receita").reduce((a, t) => a + t.amount, 0),
-      despesa: monthTx.filter(t => t.type === "despesa").reduce((a, t) => a + t.amount, 0),
-    });
-  }
-
-  const statusLabel: Record<string, string> = { pendente: "Pendente", pago: "Pago", recebido: "Recebido" };
+  // Chart data
+  const chartData = useMemo(() => {
+    const now = new Date();
+    const data = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      const label = d.toLocaleDateString("pt-BR", { month: "short" });
+      const monthTx = transactions.filter(t => t.date?.startsWith(key));
+      data.push({
+        month: label,
+        receita: monthTx.filter(t => t.type === "receita").reduce((a, t) => a + t.amount, 0),
+        despesa: monthTx.filter(t => t.type === "despesa").reduce((a, t) => a + t.amount, 0),
+      });
+    }
+    return data;
+  }, [transactions]);
 
   const receitaCats = categories.filter(c => c.type === "receita");
   const despesaCats = categories.filter(c => c.type === "despesa");
   const filteredCats = form.type === "receita" ? receitaCats : despesaCats;
+
+  const periodLabels: Record<PeriodKey, string> = {
+    todos: "Todo período", hoje: "Hoje", semana: "Esta semana",
+    mes: "Este mês", mes_anterior: "Mês anterior", ano: "Este ano", personalizado: "Personalizado",
+  };
+
+  // Unique categories from transactions for filter
+  const usedCategories = [...new Set(transactions.map(t => t.category).filter(Boolean))] as string[];
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -286,27 +351,98 @@ export default function Financas() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {/* Filters */}
+      <Card className="glass-card">
+        <CardContent className="p-4">
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="space-y-1">
+              <Label className="text-xs">Período</Label>
+              <Select value={periodFilter} onValueChange={(v) => setPeriodFilter(v as PeriodKey)}>
+                <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {Object.entries(periodLabels).map(([k, v]) => (
+                    <SelectItem key={k} value={k}>{v}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {periodFilter === "personalizado" && (
+              <>
+                <div className="space-y-1">
+                  <Label className="text-xs">De</Label>
+                  <Input type="date" className="w-36" value={customStart} onChange={e => setCustomStart(e.target.value)} />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Até</Label>
+                  <Input type="date" className="w-36" value={customEnd} onChange={e => setCustomEnd(e.target.value)} />
+                </div>
+              </>
+            )}
+            <div className="space-y-1">
+              <Label className="text-xs">Tipo</Label>
+              <Select value={filter} onValueChange={setFilter}>
+                <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos</SelectItem>
+                  <SelectItem value="receita">Receitas</SelectItem>
+                  <SelectItem value="despesa">Despesas</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Status</Label>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos</SelectItem>
+                  <SelectItem value="pendente">Pendentes</SelectItem>
+                  <SelectItem value="concluido">Recebidos/Pagos</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Categoria</Label>
+              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todas</SelectItem>
+                  {usedCategories.sort().map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="glass-card">
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center"><DollarSign className="h-5 w-5 text-primary" /></div>
-            <div><p className="text-xs text-muted-foreground">Saldo</p><p className="text-xl font-bold">{fmt(saldo)}</p></div>
-          </CardContent>
-        </Card>
-        <Card className="glass-card">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center"><TrendingUp className="h-5 w-5 text-success" /></div>
-            <div><p className="text-xs text-muted-foreground">Receitas</p><p className="text-xl font-bold">{fmt(totalReceita)}</p></div>
+            <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center"><TrendingUp className="h-5 w-5 text-emerald-500" /></div>
+            <div><p className="text-xs text-muted-foreground">Total Entradas</p><p className="text-xl font-bold text-emerald-500">{fmt(totalReceita)}</p></div>
           </CardContent>
         </Card>
         <Card className="glass-card">
           <CardContent className="p-4 flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center"><TrendingDown className="h-5 w-5 text-destructive" /></div>
-            <div><p className="text-xs text-muted-foreground">Despesas</p><p className="text-xl font-bold">{fmt(totalDespesa)}</p></div>
+            <div><p className="text-xs text-muted-foreground">Total Saídas</p><p className="text-xl font-bold text-destructive">{fmt(totalDespesa)}</p></div>
+          </CardContent>
+        </Card>
+        <Card className="glass-card">
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center"><DollarSign className="h-5 w-5 text-primary" /></div>
+            <div><p className="text-xs text-muted-foreground">Saldo do Período</p><p className="text-xl font-bold">{fmt(saldo)}</p></div>
+          </CardContent>
+        </Card>
+        <Card className="glass-card">
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-yellow-500/10 flex items-center justify-center"><Clock className="h-5 w-5 text-yellow-500" /></div>
+            <div><p className="text-xs text-muted-foreground">Total Pendente</p><p className="text-xl font-bold text-yellow-500">{fmt(totalPendente)}</p></div>
           </CardContent>
         </Card>
       </div>
 
+      {/* Chart */}
       <Card className="glass-card">
         <CardHeader><CardTitle className="text-base">Fluxo de caixa mensal</CardTitle></CardHeader>
         <CardContent>
@@ -325,29 +461,10 @@ export default function Financas() {
         </CardContent>
       </Card>
 
+      {/* Transactions List */}
       <Card className="glass-card">
         <CardHeader>
-          <div className="flex items-center justify-between flex-wrap gap-2">
-            <CardTitle className="text-base">Lançamentos</CardTitle>
-            <div className="flex gap-2">
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="todos">Todos status</SelectItem>
-                  <SelectItem value="pendente">Pendentes</SelectItem>
-                  <SelectItem value="concluido">Recebidos/Pagos</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={filter} onValueChange={setFilter}>
-                <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="todos">Todos tipos</SelectItem>
-                  <SelectItem value="receita">Receitas</SelectItem>
-                  <SelectItem value="despesa">Despesas</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+          <CardTitle className="text-base">Lançamentos ({filtered.length})</CardTitle>
         </CardHeader>
         <CardContent>
           {filtered.length === 0 ? (
@@ -363,7 +480,7 @@ export default function Financas() {
                 return (
                   <div key={tx.id} className={`flex items-center justify-between p-3 rounded-lg transition-colors ${isPending ? "bg-yellow-500/5 hover:bg-yellow-500/10 border border-yellow-500/20" : "hover:bg-muted/50"}`}>
                     <div className="flex items-center gap-3">
-                      <div className={`w-2 h-2 rounded-full ${tx.type === "receita" ? "bg-success" : "bg-destructive"}`} />
+                      <div className={`w-2 h-2 rounded-full ${tx.type === "receita" ? "bg-emerald-500" : "bg-destructive"}`} />
                       <div>
                         <p className="text-sm font-medium">{tx.description}</p>
                         <p className="text-xs text-muted-foreground">
@@ -387,7 +504,7 @@ export default function Financas() {
                           <SelectItem value={tx.type === "receita" ? "recebido" : "pago"}>{tx.type === "receita" ? "Recebido" : "Pago"}</SelectItem>
                         </SelectContent>
                       </Select>
-                      <span className={`text-sm font-semibold ${tx.type === "receita" ? "text-success" : "text-destructive"}`}>
+                      <span className={`text-sm font-semibold ${tx.type === "receita" ? "text-emerald-500" : "text-destructive"}`}>
                         {tx.type === "receita" ? "+" : "-"}{fmt(tx.amount)}
                       </span>
                     </div>
@@ -404,7 +521,7 @@ export default function Financas() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir categoria</AlertDialogTitle>
-            <AlertDialogDescription>Tem certeza que deseja excluir a categoria "{deletingCat?.name}"? Esta ação não pode ser desfeita.</AlertDialogDescription>
+            <AlertDialogDescription>Tem certeza que deseja excluir a categoria "{deletingCat?.name}"?</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
