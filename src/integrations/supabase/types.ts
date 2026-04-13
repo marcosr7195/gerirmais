@@ -78,37 +78,76 @@ export type Database = {
       }
       clients: {
         Row: {
+          city: string | null
+          complement: string | null
           created_at: string | null
+          document: string | null
           email: string | null
+          first_contact_date: string | null
           id: string
+          instagram: string | null
           name: string
+          neighborhood: string | null
           notes: string | null
+          number: string | null
           origin: string | null
+          person_type: string | null
           phone: string | null
+          state: string | null
+          street: string | null
+          trade_name: string | null
           updated_at: string | null
           user_id: string
+          website: string | null
+          zip_code: string | null
         }
         Insert: {
+          city?: string | null
+          complement?: string | null
           created_at?: string | null
+          document?: string | null
           email?: string | null
+          first_contact_date?: string | null
           id?: string
+          instagram?: string | null
           name: string
+          neighborhood?: string | null
           notes?: string | null
+          number?: string | null
           origin?: string | null
+          person_type?: string | null
           phone?: string | null
+          state?: string | null
+          street?: string | null
+          trade_name?: string | null
           updated_at?: string | null
           user_id: string
+          website?: string | null
+          zip_code?: string | null
         }
         Update: {
+          city?: string | null
+          complement?: string | null
           created_at?: string | null
+          document?: string | null
           email?: string | null
+          first_contact_date?: string | null
           id?: string
+          instagram?: string | null
           name?: string
+          neighborhood?: string | null
           notes?: string | null
+          number?: string | null
           origin?: string | null
+          person_type?: string | null
           phone?: string | null
+          state?: string | null
+          street?: string | null
+          trade_name?: string | null
           updated_at?: string | null
           user_id?: string
+          website?: string | null
+          zip_code?: string | null
         }
         Relationships: []
       }
