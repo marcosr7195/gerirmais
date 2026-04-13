@@ -100,16 +100,25 @@ export default function Financas() {
     const cats = data || [];
     if (cats.length === 0 && user) {
       const defaults = [
-        { name: "Consultoria", type: "receita" }, { name: "Mentoria", type: "receita" },
-        { name: "Contrato Recorrente", type: "receita" }, { name: "Serviço Avulso", type: "receita" },
-        { name: "Comissão", type: "receita" }, { name: "Produto Digital", type: "receita" },
-        { name: "Outros Recebimentos", type: "receita" },
-        { name: "Ferramentas e Software", type: "despesa" }, { name: "Marketing e Tráfego", type: "despesa" },
-        { name: "Domínio e Hospedagem", type: "despesa" }, { name: "Telefone e Internet", type: "despesa" },
-        { name: "Coworking e Escritório", type: "despesa" }, { name: "Pró-labore", type: "despesa" },
-        { name: "Freelancer e Parceiro", type: "despesa" }, { name: "Capacitação", type: "despesa" },
-        { name: "Impostos e Taxas", type: "despesa" }, { name: "Contador", type: "despesa" },
-        { name: "Despesa Variável", type: "despesa" }, { name: "Investimento", type: "despesa" },
+        { name: "Consultoria", type: "receita", classification: "receita_operacional" },
+        { name: "Mentoria", type: "receita", classification: "receita_operacional" },
+        { name: "Contrato Recorrente", type: "receita", classification: "receita_operacional" },
+        { name: "Serviço Avulso", type: "receita", classification: "receita_operacional" },
+        { name: "Comissão", type: "receita", classification: "receita_nao_operacional" },
+        { name: "Produto Digital", type: "receita", classification: "receita_operacional" },
+        { name: "Outros Recebimentos", type: "receita", classification: "receita_nao_operacional" },
+        { name: "Ferramentas e Software", type: "despesa", classification: "despesa_operacional" },
+        { name: "Marketing e Tráfego", type: "despesa", classification: "despesa_operacional" },
+        { name: "Domínio e Hospedagem", type: "despesa", classification: "despesa_operacional" },
+        { name: "Telefone e Internet", type: "despesa", classification: "despesa_operacional" },
+        { name: "Coworking e Escritório", type: "despesa", classification: "despesa_operacional" },
+        { name: "Pró-labore", type: "despesa", classification: "despesa_pessoal" },
+        { name: "Freelancer e Parceiro", type: "despesa", classification: "custo_servico" },
+        { name: "Capacitação", type: "despesa", classification: "despesa_pessoal" },
+        { name: "Impostos e Taxas", type: "despesa", classification: "imposto_taxa" },
+        { name: "Contador", type: "despesa", classification: "despesa_operacional" },
+        { name: "Despesa Variável", type: "despesa", classification: "despesa_operacional" },
+        { name: "Investimento", type: "despesa", classification: "despesa_operacional" },
       ];
       await supabase.from("categories").insert(defaults.map(d => ({ ...d, user_id: user.id })));
       const { data: seeded } = await supabase.from("categories").select("*").eq("user_id", user.id).order("name");
