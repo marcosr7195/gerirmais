@@ -178,7 +178,7 @@ export default function Entregas() {
         await supabase.from("transactions").insert({
           user_id: user!.id, service_order_id: os.id, type: "receita", category: "Serviço",
           description: `OS concluída - ${deal.title}`, amount: Number(deal.value),
-          date: new Date().toISOString().slice(0, 10), status: "recebido",
+          date: new Date().toISOString().slice(0, 10), status: "pendente",
         });
         toast.success("OS concluída e receita lançada!");
       } else { toast.success("OS concluída!"); }
