@@ -12,7 +12,8 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Plus, UserPlus, Pencil, Eye, ArrowLeft } from "lucide-react";
+import { Plus, UserPlus, Pencil, Eye, ArrowLeft, FileText } from "lucide-react";
+import { ProposalGenerator } from "@/components/ProposalGenerator";
 import { toast } from "sonner";
 
 interface Client {
@@ -93,12 +94,13 @@ export default function Vendas() {
   const [viewClient, setViewClient] = useState<Client | null>(null);
   const [editingClient, setEditingClient] = useState(false);
   const [editClientForm, setEditClientForm] = useState(emptyClientForm());
+  const [proposalDeal, setProposalDeal] = useState<Deal | null>(null);
 
   useEffect(() => { if (user) { loadDeals(); loadClients(); } }, [user]);
 
   const loadDeals = async () => {
-    const { data } = await supabase.from("deals").select("*, clients(*)").eq("user_id", user!.id).order("created_at", { ascending: false });
-    setDeals((data || []).map(d => ({ ...d, value: Number(d.value), fixed_value: !!(d as any).fixed_value, os_created: !!(d as any).os_created, clients: d.clients as any })));
+    const { data } = await supabase.from("deals").select("*, clients(*), deal_items(*)").eq("user_id", user!.id).order("created_at", { ascending: false });
+    setDeals((data || []).map(d => ({ ...d, value: Number(d.value), fixed_value: !!(d as any).fixed_value, os_created: !!(d as any).os_created, clients: d.clients as any, items: ((d as any).deal_items || []).map((i: any) => ({ description: i.description, quantity: Number(i.quantity), unit_price: Number(i.unit_price) })) })));
   };
 
   const loadClients = async () => {
@@ -552,6 +554,9 @@ export default function Vendas() {
                           <p className="text-sm font-semibold text-primary">{fmt(deal.value)}</p>
                           {deal.fixed_value && <Badge variant="secondary" className="text-[10px]">Valor fixo</Badge>}
                           <div className="flex gap-1 flex-wrap">
+                            <Button variant="ghost" size="sm" className="text-xs h-6 px-2" onClick={() => setProposalDeal(deal)}>
+                              <FileText className="h-3 w-3 mr-1" />Proposta
+                            </Button>
                             {stages.filter(s => s.key !== deal.stage).map(s => (
                               <Button key={s.key} variant="ghost" size="sm" className="text-xs h-6 px-2" onClick={() => moveStage(deal.id, s.key)}>→ {s.label}</Button>
                             ))}
@@ -631,6 +636,15 @@ export default function Vendas() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Proposal Generator */}
+      {proposalDeal && (
+        <ProposalGenerator
+          deal={proposalDeal}
+          open={!!proposalDeal}
+          onOpenChange={(v) => { if (!v) setProposalDeal(null); }}
+        />
+      )}
     </div>
   );
 }

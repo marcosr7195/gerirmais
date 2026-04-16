@@ -344,6 +344,90 @@ export type Database = {
         }
         Relationships: []
       }
+      proposals: {
+        Row: {
+          acceptance_text: string | null
+          bank_info: Json | null
+          business_info: Json | null
+          client_id: string | null
+          client_info: Json | null
+          created_at: string
+          deal_id: string | null
+          delivery_deadline: string | null
+          fixed_value: boolean | null
+          id: string
+          installments: number | null
+          issue_date: string
+          items: Json | null
+          observations: string | null
+          payment_condition: string | null
+          payment_method: string | null
+          proposal_number: string
+          total_value: number | null
+          user_id: string
+          validity_date: string
+        }
+        Insert: {
+          acceptance_text?: string | null
+          bank_info?: Json | null
+          business_info?: Json | null
+          client_id?: string | null
+          client_info?: Json | null
+          created_at?: string
+          deal_id?: string | null
+          delivery_deadline?: string | null
+          fixed_value?: boolean | null
+          id?: string
+          installments?: number | null
+          issue_date?: string
+          items?: Json | null
+          observations?: string | null
+          payment_condition?: string | null
+          payment_method?: string | null
+          proposal_number: string
+          total_value?: number | null
+          user_id: string
+          validity_date: string
+        }
+        Update: {
+          acceptance_text?: string | null
+          bank_info?: Json | null
+          business_info?: Json | null
+          client_id?: string | null
+          client_info?: Json | null
+          created_at?: string
+          deal_id?: string | null
+          delivery_deadline?: string | null
+          fixed_value?: boolean | null
+          id?: string
+          installments?: number | null
+          issue_date?: string
+          items?: Json | null
+          observations?: string | null
+          payment_condition?: string | null
+          payment_method?: string | null
+          proposal_number?: string
+          total_value?: number | null
+          user_id?: string
+          validity_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proposals_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proposals_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       service_orders: {
         Row: {
           client_id: string | null
