@@ -636,6 +636,15 @@ export default function Vendas() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Proposal Generator */}
+      {proposalDeal && (
+        <ProposalGenerator
+          deal={proposalDeal}
+          open={!!proposalDeal}
+          onOpenChange={(v) => { if (!v) setProposalDeal(null); }}
+        />
+      )}
     </div>
   );
 }
