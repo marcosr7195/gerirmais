@@ -241,34 +241,106 @@ export type Database = {
       }
       profiles: {
         Row: {
+          account_holder: string | null
+          account_number: string | null
+          account_type: string | null
+          agency: string | null
+          bank_name: string | null
           business_name: string | null
+          city: string | null
+          commercial_email: string | null
+          company_name: string | null
+          complement: string | null
           created_at: string | null
           document: string | null
+          fiscal_document: string | null
+          fiscal_type: string | null
           id: string
+          instagram: string | null
+          logo_url: string | null
+          neighborhood: string | null
+          number: string | null
           onboarding_completed: boolean | null
+          owner_name: string | null
+          owner_role: string | null
+          pix_key: string | null
           service_type: string | null
+          slogan: string | null
+          state: string | null
+          street: string | null
           updated_at: string | null
           user_id: string
+          website: string | null
+          whatsapp: string | null
+          zip_code: string | null
         }
         Insert: {
+          account_holder?: string | null
+          account_number?: string | null
+          account_type?: string | null
+          agency?: string | null
+          bank_name?: string | null
           business_name?: string | null
+          city?: string | null
+          commercial_email?: string | null
+          company_name?: string | null
+          complement?: string | null
           created_at?: string | null
           document?: string | null
+          fiscal_document?: string | null
+          fiscal_type?: string | null
           id?: string
+          instagram?: string | null
+          logo_url?: string | null
+          neighborhood?: string | null
+          number?: string | null
           onboarding_completed?: boolean | null
+          owner_name?: string | null
+          owner_role?: string | null
+          pix_key?: string | null
           service_type?: string | null
+          slogan?: string | null
+          state?: string | null
+          street?: string | null
           updated_at?: string | null
           user_id: string
+          website?: string | null
+          whatsapp?: string | null
+          zip_code?: string | null
         }
         Update: {
+          account_holder?: string | null
+          account_number?: string | null
+          account_type?: string | null
+          agency?: string | null
+          bank_name?: string | null
           business_name?: string | null
+          city?: string | null
+          commercial_email?: string | null
+          company_name?: string | null
+          complement?: string | null
           created_at?: string | null
           document?: string | null
+          fiscal_document?: string | null
+          fiscal_type?: string | null
           id?: string
+          instagram?: string | null
+          logo_url?: string | null
+          neighborhood?: string | null
+          number?: string | null
           onboarding_completed?: boolean | null
+          owner_name?: string | null
+          owner_role?: string | null
+          pix_key?: string | null
           service_type?: string | null
+          slogan?: string | null
+          state?: string | null
+          street?: string | null
           updated_at?: string | null
           user_id?: string
+          website?: string | null
+          whatsapp?: string | null
+          zip_code?: string | null
         }
         Relationships: []
       }
