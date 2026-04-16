@@ -1,4 +1,4 @@
-import { LayoutDashboard, DollarSign, Handshake, ClipboardList, LogOut } from "lucide-react";
+import { LayoutDashboard, DollarSign, Handshake, ClipboardList, LogOut, Settings } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -66,6 +66,18 @@ export function AppSidebar() {
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild>
+              <NavLink
+                to="/configuracoes"
+                className="hover:bg-sidebar-accent/50"
+                activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+              >
+                <Settings className="mr-2 h-4 w-4" />
+                {!collapsed && <span>Configurações</span>}
+              </NavLink>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton onClick={signOut} className="hover:bg-sidebar-accent/50">
               <LogOut className="mr-2 h-4 w-4" />

@@ -9,6 +9,30 @@ interface Profile {
   service_type: string | null;
   document: string | null;
   onboarding_completed: boolean | null;
+  slogan: string | null;
+  owner_name: string | null;
+  owner_role: string | null;
+  fiscal_type: string | null;
+  fiscal_document: string | null;
+  company_name: string | null;
+  whatsapp: string | null;
+  commercial_email: string | null;
+  website: string | null;
+  instagram: string | null;
+  zip_code: string | null;
+  street: string | null;
+  number: string | null;
+  complement: string | null;
+  neighborhood: string | null;
+  city: string | null;
+  state: string | null;
+  bank_name: string | null;
+  account_type: string | null;
+  agency: string | null;
+  account_number: string | null;
+  pix_key: string | null;
+  account_holder: string | null;
+  logo_url: string | null;
 }
 
 interface AuthContextType {
