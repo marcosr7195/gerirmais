@@ -554,6 +554,9 @@ export default function Vendas() {
                           <p className="text-sm font-semibold text-primary">{fmt(deal.value)}</p>
                           {deal.fixed_value && <Badge variant="secondary" className="text-[10px]">Valor fixo</Badge>}
                           <div className="flex gap-1 flex-wrap">
+                            <Button variant="ghost" size="sm" className="text-xs h-6 px-2" onClick={() => setProposalDeal(deal)}>
+                              <FileText className="h-3 w-3 mr-1" />Proposta
+                            </Button>
                             {stages.filter(s => s.key !== deal.stage).map(s => (
                               <Button key={s.key} variant="ghost" size="sm" className="text-xs h-6 px-2" onClick={() => moveStage(deal.id, s.key)}>→ {s.label}</Button>
                             ))}
