@@ -14,6 +14,7 @@ import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Plus, UserPlus, Pencil, Eye, ArrowLeft, FileText } from "lucide-react";
 import { ProposalGenerator } from "@/components/ProposalGenerator";
+import { ClientHistory } from "@/components/ClientHistory";
 import { toast } from "sonner";
 
 interface Client {
