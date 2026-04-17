@@ -351,12 +351,12 @@ export default function Financas() {
             </DialogContent>
           </Dialog>
 
-          <Dialog open={open} onOpenChange={setOpen}>
+          <Dialog open={open} onOpenChange={(o) => (o ? setOpen(true) : closeForm())}>
             <DialogTrigger asChild>
               <Button><Plus className="h-4 w-4 mr-2" />Novo lançamento</Button>
             </DialogTrigger>
             <DialogContent>
-              <DialogHeader><DialogTitle>Novo lançamento</DialogTitle></DialogHeader>
+              <DialogHeader><DialogTitle>{editingTx ? "Editar lançamento" : "Novo lançamento"}</DialogTitle></DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
