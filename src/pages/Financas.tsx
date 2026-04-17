@@ -87,6 +87,8 @@ export default function Financas() {
   const [customStart, setCustomStart] = useState("");
   const [customEnd, setCustomEnd] = useState("");
   const [baixaTx, setBaixaTx] = useState<Transaction | null>(null);
+  const [editingTx, setEditingTx] = useState<Transaction | null>(null);
+  const [deletingTx, setDeletingTx] = useState<Transaction | null>(null);
 
   useEffect(() => { if (user) { load(); loadCategories(); } }, [user]);
 
@@ -130,16 +132,58 @@ export default function Financas() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const { error } = await supabase.from("transactions").insert({
-      user_id: user!.id, type: form.type, category: form.category || null,
-      description: form.description, amount: parseFloat(form.amount), date: form.date,
-      status: form.status, due_date: form.due_date || null,
-      paid_at: form.status === "pago" || form.status === "recebido" ? new Date().toISOString() : null,
-    });
-    if (error) { toast.error("Erro ao salvar"); return; }
-    toast.success("Lançamento criado!");
+    const payload = {
+      type: form.type,
+      category: form.category || null,
+      description: form.description,
+      amount: parseFloat(form.amount),
+      date: form.date,
+      status: form.status,
+      due_date: form.due_date || null,
+      paid_at:
+        form.status === "pago" || form.status === "recebido"
+          ? editingTx?.paid_at ?? new Date().toISOString()
+          : null,
+    };
+    if (editingTx) {
+      const { error } = await supabase.from("transactions").update(payload).eq("id", editingTx.id);
+      if (error) { toast.error("Erro ao atualizar"); return; }
+      toast.success("Lançamento atualizado!");
+    } else {
+      const { error } = await supabase.from("transactions").insert({ user_id: user!.id, ...payload });
+      if (error) { toast.error("Erro ao salvar"); return; }
+      toast.success("Lançamento criado!");
+    }
+    closeForm();
+    load();
+  };
+
+  const closeForm = () => {
     setOpen(false);
+    setEditingTx(null);
     setForm({ type: "receita", category: "", description: "", amount: "", date: new Date().toISOString().slice(0, 10), status: "pendente", due_date: "" });
+  };
+
+  const openEdit = (tx: Transaction) => {
+    setEditingTx(tx);
+    setForm({
+      type: tx.type,
+      category: tx.category || "",
+      description: tx.description,
+      amount: String(tx.amount),
+      date: tx.date,
+      status: tx.status || "pendente",
+      due_date: tx.due_date || "",
+    });
+    setOpen(true);
+  };
+
+  const deleteTransaction = async () => {
+    if (!deletingTx) return;
+    const { error } = await supabase.from("transactions").delete().eq("id", deletingTx.id);
+    if (error) { toast.error("Erro ao excluir"); return; }
+    toast.success("Lançamento excluído!");
+    setDeletingTx(null);
     load();
   };
 
@@ -307,12 +351,12 @@ export default function Financas() {
             </DialogContent>
           </Dialog>
 
-          <Dialog open={open} onOpenChange={setOpen}>
+          <Dialog open={open} onOpenChange={(o) => (o ? setOpen(true) : closeForm())}>
             <DialogTrigger asChild>
               <Button><Plus className="h-4 w-4 mr-2" />Novo lançamento</Button>
             </DialogTrigger>
             <DialogContent>
-              <DialogHeader><DialogTitle>Novo lançamento</DialogTitle></DialogHeader>
+              <DialogHeader><DialogTitle>{editingTx ? "Editar lançamento" : "Novo lançamento"}</DialogTitle></DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -353,7 +397,7 @@ export default function Financas() {
                   </div>
                   <div className="space-y-2"><Label>Vencimento</Label><Input type="date" value={form.due_date} onChange={e => setForm({ ...form, due_date: e.target.value })} /></div>
                 </div>
-                <Button type="submit" className="w-full">Salvar</Button>
+                <Button type="submit" className="w-full">{editingTx ? "Salvar alterações" : "Salvar"}</Button>
               </form>
             </DialogContent>
           </Dialog>
@@ -516,6 +560,12 @@ export default function Financas() {
                       <span className={`text-sm font-semibold ${tx.type === "receita" ? "text-emerald-500" : "text-destructive"}`}>
                         {tx.type === "receita" ? "+" : "-"}{fmt(tx.amount)}
                       </span>
+                      <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEdit(tx)} title="Editar">
+                        <Pencil className="h-3 w-3" />
+                      </Button>
+                      <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={() => setDeletingTx(tx)} title="Excluir">
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
                     </div>
                   </div>
                 );
@@ -555,6 +605,22 @@ export default function Financas() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={darBaixa}>Confirmar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Alert dialog for transaction deletion */}
+      <AlertDialog open={!!deletingTx} onOpenChange={(o) => !o && setDeletingTx(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir lançamento</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir "{deletingTx?.description}" no valor de {deletingTx ? fmt(deletingTx.amount) : ""}? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={deleteTransaction} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Excluir</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
