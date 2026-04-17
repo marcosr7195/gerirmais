@@ -397,7 +397,7 @@ export default function Financas() {
                   </div>
                   <div className="space-y-2"><Label>Vencimento</Label><Input type="date" value={form.due_date} onChange={e => setForm({ ...form, due_date: e.target.value })} /></div>
                 </div>
-                <Button type="submit" className="w-full">Salvar</Button>
+                <Button type="submit" className="w-full">{editingTx ? "Salvar alterações" : "Salvar"}</Button>
               </form>
             </DialogContent>
           </Dialog>
