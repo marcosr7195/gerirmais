@@ -560,6 +560,12 @@ export default function Financas() {
                       <span className={`text-sm font-semibold ${tx.type === "receita" ? "text-emerald-500" : "text-destructive"}`}>
                         {tx.type === "receita" ? "+" : "-"}{fmt(tx.amount)}
                       </span>
+                      <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEdit(tx)} title="Editar">
+                        <Pencil className="h-3 w-3" />
+                      </Button>
+                      <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={() => setDeletingTx(tx)} title="Excluir">
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
                     </div>
                   </div>
                 );
