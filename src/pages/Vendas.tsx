@@ -450,6 +450,8 @@ export default function Vendas() {
             </CardContent>
           </Card>
         </div>
+
+        <ClientHistory clientId={c.id} />
       </div>
     );
   };
