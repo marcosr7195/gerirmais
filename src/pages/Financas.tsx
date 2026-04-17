@@ -87,6 +87,8 @@ export default function Financas() {
   const [customStart, setCustomStart] = useState("");
   const [customEnd, setCustomEnd] = useState("");
   const [baixaTx, setBaixaTx] = useState<Transaction | null>(null);
+  const [editingTx, setEditingTx] = useState<Transaction | null>(null);
+  const [deletingTx, setDeletingTx] = useState<Transaction | null>(null);
 
   useEffect(() => { if (user) { load(); loadCategories(); } }, [user]);
 
