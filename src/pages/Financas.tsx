@@ -132,16 +132,58 @@ export default function Financas() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const { error } = await supabase.from("transactions").insert({
-      user_id: user!.id, type: form.type, category: form.category || null,
-      description: form.description, amount: parseFloat(form.amount), date: form.date,
-      status: form.status, due_date: form.due_date || null,
-      paid_at: form.status === "pago" || form.status === "recebido" ? new Date().toISOString() : null,
-    });
-    if (error) { toast.error("Erro ao salvar"); return; }
-    toast.success("Lançamento criado!");
+    const payload = {
+      type: form.type,
+      category: form.category || null,
+      description: form.description,
+      amount: parseFloat(form.amount),
+      date: form.date,
+      status: form.status,
+      due_date: form.due_date || null,
+      paid_at:
+        form.status === "pago" || form.status === "recebido"
+          ? editingTx?.paid_at ?? new Date().toISOString()
+          : null,
+    };
+    if (editingTx) {
+      const { error } = await supabase.from("transactions").update(payload).eq("id", editingTx.id);
+      if (error) { toast.error("Erro ao atualizar"); return; }
+      toast.success("Lançamento atualizado!");
+    } else {
+      const { error } = await supabase.from("transactions").insert({ user_id: user!.id, ...payload });
+      if (error) { toast.error("Erro ao salvar"); return; }
+      toast.success("Lançamento criado!");
+    }
+    closeForm();
+    load();
+  };
+
+  const closeForm = () => {
     setOpen(false);
+    setEditingTx(null);
     setForm({ type: "receita", category: "", description: "", amount: "", date: new Date().toISOString().slice(0, 10), status: "pendente", due_date: "" });
+  };
+
+  const openEdit = (tx: Transaction) => {
+    setEditingTx(tx);
+    setForm({
+      type: tx.type,
+      category: tx.category || "",
+      description: tx.description,
+      amount: String(tx.amount),
+      date: tx.date,
+      status: tx.status || "pendente",
+      due_date: tx.due_date || "",
+    });
+    setOpen(true);
+  };
+
+  const deleteTransaction = async () => {
+    if (!deletingTx) return;
+    const { error } = await supabase.from("transactions").delete().eq("id", deletingTx.id);
+    if (error) { toast.error("Erro ao excluir"); return; }
+    toast.success("Lançamento excluído!");
+    setDeletingTx(null);
     load();
   };
 
