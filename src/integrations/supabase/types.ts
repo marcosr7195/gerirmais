@@ -76,6 +76,68 @@ export type Database = {
           },
         ]
       }
+      client_interactions: {
+        Row: {
+          client_id: string
+          created_at: string
+          duration_minutes: number | null
+          id: string
+          interaction_date: string
+          interaction_type: string
+          is_automatic: boolean
+          next_step: string | null
+          related_entity_id: string | null
+          related_entity_type: string | null
+          reminder_date: string | null
+          subject: string | null
+          summary: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          duration_minutes?: number | null
+          id?: string
+          interaction_date?: string
+          interaction_type?: string
+          is_automatic?: boolean
+          next_step?: string | null
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          reminder_date?: string | null
+          subject?: string | null
+          summary?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          duration_minutes?: number | null
+          id?: string
+          interaction_date?: string
+          interaction_type?: string
+          is_automatic?: boolean
+          next_step?: string | null
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          reminder_date?: string | null
+          subject?: string | null
+          summary?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_interactions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           city: string | null
