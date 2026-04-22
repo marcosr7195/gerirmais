@@ -253,7 +253,9 @@ export type Database = {
       }
       deals: {
         Row: {
+          archived_at: string | null
           client_id: string | null
+          closed_at: string | null
           created_at: string | null
           fixed_value: boolean
           id: string
@@ -266,7 +268,9 @@ export type Database = {
           value: number | null
         }
         Insert: {
+          archived_at?: string | null
           client_id?: string | null
+          closed_at?: string | null
           created_at?: string | null
           fixed_value?: boolean
           id?: string
@@ -279,7 +283,9 @@ export type Database = {
           value?: number | null
         }
         Update: {
+          archived_at?: string | null
           client_id?: string | null
+          closed_at?: string | null
           created_at?: string | null
           fixed_value?: boolean
           id?: string

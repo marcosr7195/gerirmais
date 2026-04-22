@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,9 +12,11 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Plus, UserPlus, Pencil, Eye, ArrowLeft, FileText } from "lucide-react";
+import { Plus, UserPlus, Pencil, Eye, ArrowLeft, FileText, Search } from "lucide-react";
 import { ProposalGenerator } from "@/components/ProposalGenerator";
 import { ClientHistory } from "@/components/ClientHistory";
+import { ArchivedDealRow } from "@/components/sales/ArchivedDealRow";
+import { ArchivedDealDetailsDialog } from "@/components/sales/ArchivedDealDetailsDialog";
 import { toast } from "sonner";
 
 interface Client {
@@ -28,7 +30,10 @@ interface Client {
 interface DealItem { id?: string; description: string; quantity: number; unit_price: number; }
 interface Deal {
   id: string; title: string; stage: string; value: number; client_id: string | null;
-  notes: string | null; fixed_value: boolean; os_created: boolean; clients?: Client | null; items?: DealItem[];
+  notes: string | null; fixed_value: boolean; os_created: boolean; closed_at: string | null; archived_at: string | null;
+  clients?: Client | null; items?: DealItem[]; proposals?: { id: string; proposal_number: string; issue_date: string; total_value: number | null }[] | null;
+  service_orders?: { id: string; title: string | null; completed_at: string | null; created_at?: string | null }[] | null;
+  interactions?: { id: string; interaction_type: string; interaction_date: string; subject: string | null; summary: string | null; is_automatic: boolean }[] | null;
 }
 
 const stages = [
@@ -39,6 +44,12 @@ const stages = [
 ];
 
 const originOptions = ["Indicação", "Instagram", "Google", "LinkedIn", "Evento", "Outro"];
+const RECENT_CLOSED_DAYS = 7;
+
+const isOlderThanDays = (value: string | null | undefined, days: number) => {
+  if (!value) return false;
+  return Date.now() - new Date(value).getTime() >= days * 24 * 60 * 60 * 1000;
+};
 
 const emptyClientForm = (): Omit<Client, "id"> => ({
   name: "", email: "", phone: "", origin: "", notes: "",
@@ -96,12 +107,56 @@ export default function Vendas() {
   const [editingClient, setEditingClient] = useState(false);
   const [editClientForm, setEditClientForm] = useState(emptyClientForm());
   const [proposalDeal, setProposalDeal] = useState<Deal | null>(null);
+  const [archiveSearch, setArchiveSearch] = useState("");
+  const [archivedDealId, setArchivedDealId] = useState<string | null>(null);
+  const [archivedDetailsOpen, setArchivedDetailsOpen] = useState(false);
 
   useEffect(() => { if (user) { loadDeals(); loadClients(); } }, [user]);
 
   const loadDeals = async () => {
-    const { data } = await supabase.from("deals").select("*, clients(*), deal_items(*)").eq("user_id", user!.id).order("created_at", { ascending: false });
-    setDeals((data || []).map(d => ({ ...d, value: Number(d.value), fixed_value: !!(d as any).fixed_value, os_created: !!(d as any).os_created, clients: d.clients as any, items: ((d as any).deal_items || []).map((i: any) => ({ description: i.description, quantity: Number(i.quantity), unit_price: Number(i.unit_price) })) })));
+    const { data } = await supabase
+      .from("deals")
+      .select("*, clients(*), deal_items(*), proposals(id, proposal_number, issue_date, total_value), service_orders(id, title, completed_at, created_at), interactions:client_interactions(id, interaction_type, interaction_date, subject, summary, is_automatic)")
+      .eq("user_id", user!.id)
+      .order("created_at", { ascending: false });
+
+    const dealData = (data || []) as any[];
+    const autoArchiveIds = dealData
+      .filter((deal) => {
+        const hasCompletedOrder = (deal.service_orders || []).some((order: any) => !!order.completed_at);
+        return deal.stage === "fechado" && !deal.archived_at && hasCompletedOrder;
+      })
+      .map((deal) => deal.id);
+
+    const staleClosedIds = dealData
+      .filter((deal) => deal.stage === "fechado" && !deal.archived_at && isOlderThanDays(deal.closed_at || deal.updated_at, RECENT_CLOSED_DAYS))
+      .map((deal) => deal.id);
+
+    const idsToArchive = Array.from(new Set([...autoArchiveIds, ...staleClosedIds]));
+
+    if (idsToArchive.length > 0) {
+      const archivedAt = new Date().toISOString();
+      const { error } = await supabase.from("deals").update({ archived_at: archivedAt } as any).in("id", idsToArchive);
+      if (!error) {
+        dealData.forEach((deal) => {
+          if (idsToArchive.includes(deal.id)) {
+            deal.archived_at = archivedAt;
+          }
+        });
+      }
+    }
+
+    setDeals(dealData.map(d => ({
+      ...d,
+      value: Number(d.value),
+      fixed_value: !!(d as any).fixed_value,
+      os_created: !!(d as any).os_created,
+      clients: d.clients as any,
+      proposals: (d.proposals || []) as any,
+      service_orders: (d.service_orders || []) as any,
+      interactions: (d.interactions || []) as any,
+      items: ((d as any).deal_items || []).map((i: any) => ({ description: i.description, quantity: Number(i.quantity), unit_price: Number(i.unit_price) })),
+    })));
   };
 
   const loadClients = async () => {
@@ -134,6 +189,8 @@ export default function Vendas() {
     const { data, error } = await supabase.from("deals").insert({
       user_id: user!.id, title: dealForm.title, client_id: dealForm.client_id || null,
       stage: dealForm.stage, value: total, fixed_value: isFixedValue, notes: dealForm.notes || null,
+      closed_at: dealForm.stage === "fechado" ? new Date().toISOString() : null,
+      archived_at: null,
     } as any).select().single();
     if (error) { toast.error("Erro ao criar negócio"); return; }
     if (!isFixedValue) {
@@ -166,7 +223,11 @@ export default function Vendas() {
   const moveStage = async (dealId: string, newStage: string) => {
     const deal = deals.find(d => d.id === dealId);
     if (!deal) return;
-    const updateData: any = { stage: newStage };
+    const updateData: any = {
+      stage: newStage,
+      closed_at: newStage === "fechado" ? (deal.closed_at || new Date().toISOString()) : null,
+      archived_at: newStage === "fechado" ? null : deal.archived_at ?? null,
+    };
     if (newStage === "fechado" && !deal.os_created) {
       await createServiceOrder(dealId, deal.title, deal.client_id);
       updateData.os_created = true;
@@ -184,6 +245,8 @@ export default function Vendas() {
     const updateData: any = {
       title: editDeal.title, client_id: editDeal.client_id || null, stage: editDeal.stage,
       value: editDeal.value, fixed_value: editDeal.fixed_value, notes: editDeal.notes || null,
+      closed_at: editDeal.stage === "fechado" ? (editDeal.closed_at || new Date().toISOString()) : null,
+      archived_at: editDeal.stage === "fechado" ? null : editDeal.archived_at ?? null,
     };
     if (editDeal.stage === "fechado" && !editDeal.os_created) {
       await createServiceOrder(editDeal.id, editDeal.title, editDeal.client_id);
@@ -265,6 +328,32 @@ export default function Vendas() {
 
   const fmt = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
   const total = dealItems.reduce((a, i) => a + i.quantity * i.unit_price, 0);
+  const visibleDeals = useMemo(() => deals.filter((deal) => {
+    if (deal.archived_at) return false;
+    if (deal.stage === "perdido") return false;
+    if (deal.stage === "fechado") return !isOlderThanDays(deal.closed_at || null, RECENT_CLOSED_DAYS);
+    return true;
+  }), [deals]);
+
+  const archivedDeals = useMemo(() => {
+    const query = archiveSearch.trim().toLowerCase();
+    return deals
+      .filter((deal) => !!deal.archived_at)
+      .filter((deal) => {
+        if (!query) return true;
+        return deal.title.toLowerCase().includes(query) || (deal.clients?.name || "").toLowerCase().includes(query);
+      });
+  }, [archiveSearch, deals]);
+
+  const archivedDeal = useMemo(
+    () => deals.find((deal) => deal.id === archivedDealId) || null,
+    [archivedDealId, deals],
+  );
+
+  const openArchivedDetails = (dealId: string) => {
+    setArchivedDealId(dealId);
+    setArchivedDetailsOpen(true);
+  };
 
   // --- CLIENT FORM FIELDS (reusable between create & edit) ---
   const renderClientFields = (form: ReturnType<typeof emptyClientForm>, setForm: (f: any) => void, isEdit = false) => (
@@ -529,6 +618,7 @@ export default function Vendas() {
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList>
           <TabsTrigger value="pipeline">Pipeline</TabsTrigger>
+          <TabsTrigger value="arquivo">Negócios fechados</TabsTrigger>
           <TabsTrigger value="clientes">Clientes</TabsTrigger>
           {viewClient && <TabsTrigger value="cliente-detalhe">Detalhes</TabsTrigger>}
         </TabsList>
@@ -536,7 +626,7 @@ export default function Vendas() {
         <TabsContent value="pipeline" className="mt-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {stages.map(stage => {
-              const stageDeals = deals.filter(d => d.stage === stage.key);
+              const stageDeals = visibleDeals.filter(d => d.stage === stage.key);
               return (
                 <div key={stage.key} className="space-y-3">
                   <div className="flex items-center justify-between">
@@ -572,6 +662,34 @@ export default function Vendas() {
               );
             })}
           </div>
+        </TabsContent>
+
+        <TabsContent value="arquivo" className="mt-4 space-y-4">
+          <Card>
+            <CardContent className="p-4">
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={archiveSearch}
+                  onChange={e => setArchiveSearch(e.target.value)}
+                  placeholder="Buscar por cliente ou serviço"
+                  className="pl-9"
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {archivedDeals.length === 0 ? (
+            <Card className="glass-card">
+              <CardContent className="p-8 text-center text-muted-foreground">Nenhum negócio arquivado encontrado</CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-3">
+              {archivedDeals.map((deal) => (
+                <ArchivedDealRow key={deal.id} deal={deal} onOpenDetails={openArchivedDetails} />
+              ))}
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="clientes" className="mt-4">
@@ -648,6 +766,12 @@ export default function Vendas() {
           onOpenChange={(v) => { if (!v) setProposalDeal(null); }}
         />
       )}
+
+      <ArchivedDealDetailsDialog
+        open={archivedDetailsOpen}
+        deal={archivedDeal}
+        onOpenChange={setArchivedDetailsOpen}
+      />
     </div>
   );
 }
