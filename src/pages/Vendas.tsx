@@ -328,6 +328,32 @@ export default function Vendas() {
 
   const fmt = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
   const total = dealItems.reduce((a, i) => a + i.quantity * i.unit_price, 0);
+  const visibleDeals = useMemo(() => deals.filter((deal) => {
+    if (deal.archived_at) return false;
+    if (deal.stage === "perdido") return false;
+    if (deal.stage === "fechado") return !isOlderThanDays(deal.closed_at || null, RECENT_CLOSED_DAYS);
+    return true;
+  }), [deals]);
+
+  const archivedDeals = useMemo(() => {
+    const query = archiveSearch.trim().toLowerCase();
+    return deals
+      .filter((deal) => !!deal.archived_at)
+      .filter((deal) => {
+        if (!query) return true;
+        return deal.title.toLowerCase().includes(query) || (deal.clients?.name || "").toLowerCase().includes(query);
+      });
+  }, [archiveSearch, deals]);
+
+  const archivedDeal = useMemo(
+    () => deals.find((deal) => deal.id === archivedDealId) || null,
+    [archivedDealId, deals],
+  );
+
+  const openArchivedDetails = (dealId: string) => {
+    setArchivedDealId(dealId);
+    setArchivedDetailsOpen(true);
+  };
 
   // --- CLIENT FORM FIELDS (reusable between create & edit) ---
   const renderClientFields = (form: ReturnType<typeof emptyClientForm>, setForm: (f: any) => void, isEdit = false) => (
