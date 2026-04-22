@@ -1,6 +1,5 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { ClientHistory } from "@/components/ClientHistory";
 
 interface ProposalEntry {
   id: string;
@@ -26,7 +25,6 @@ interface ArchivedDealDetails {
   notes: string | null;
   closed_at: string | null;
   archived_at: string | null;
-  client_id: string | null;
   clients?: { name: string } | null;
   service_orders?: { id: string; title: string | null; completed_at: string | null; created_at?: string | null }[] | null;
   proposals?: ProposalEntry[] | null;
@@ -152,8 +150,6 @@ export function ArchivedDealDetailsDialog({ open, deal, onOpenChange }: Archived
                 )}
               </div>
             </div>
-
-            {deal.client_id && <ClientHistory clientId={deal.client_id} />}
           </div>
         )}
       </DialogContent>
