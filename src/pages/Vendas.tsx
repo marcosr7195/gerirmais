@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,9 +12,11 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Plus, UserPlus, Pencil, Eye, ArrowLeft, FileText } from "lucide-react";
+import { Plus, UserPlus, Pencil, Eye, ArrowLeft, FileText, Search } from "lucide-react";
 import { ProposalGenerator } from "@/components/ProposalGenerator";
 import { ClientHistory } from "@/components/ClientHistory";
+import { ArchivedDealRow } from "@/components/sales/ArchivedDealRow";
+import { ArchivedDealDetailsDialog } from "@/components/sales/ArchivedDealDetailsDialog";
 import { toast } from "sonner";
 
 interface Client {
@@ -28,7 +30,10 @@ interface Client {
 interface DealItem { id?: string; description: string; quantity: number; unit_price: number; }
 interface Deal {
   id: string; title: string; stage: string; value: number; client_id: string | null;
-  notes: string | null; fixed_value: boolean; os_created: boolean; clients?: Client | null; items?: DealItem[];
+  notes: string | null; fixed_value: boolean; os_created: boolean; closed_at?: string | null; archived_at?: string | null;
+  clients?: Client | null; items?: DealItem[]; proposals?: { id: string; proposal_number: string; issue_date: string; total_value: number | null }[] | null;
+  service_orders?: { id: string; title: string | null; completed_at: string | null; created_at?: string | null }[] | null;
+  interactions?: { id: string; interaction_type: string; interaction_date: string; subject: string | null; summary: string | null; is_automatic: boolean }[] | null;
 }
 
 const stages = [
@@ -39,6 +44,12 @@ const stages = [
 ];
 
 const originOptions = ["Indicação", "Instagram", "Google", "LinkedIn", "Evento", "Outro"];
+const RECENT_CLOSED_DAYS = 7;
+
+const isOlderThanDays = (value: string | null | undefined, days: number) => {
+  if (!value) return false;
+  return Date.now() - new Date(value).getTime() >= days * 24 * 60 * 60 * 1000;
+};
 
 const emptyClientForm = (): Omit<Client, "id"> => ({
   name: "", email: "", phone: "", origin: "", notes: "",
