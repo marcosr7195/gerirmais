@@ -30,7 +30,7 @@ interface Client {
 interface DealItem { id?: string; description: string; quantity: number; unit_price: number; }
 interface Deal {
   id: string; title: string; stage: string; value: number; client_id: string | null;
-  notes: string | null; fixed_value: boolean; os_created: boolean; closed_at?: string | null; archived_at?: string | null;
+  notes: string | null; fixed_value: boolean; os_created: boolean; closed_at: string | null; archived_at: string | null;
   clients?: Client | null; items?: DealItem[]; proposals?: { id: string; proposal_number: string; issue_date: string; total_value: number | null }[] | null;
   service_orders?: { id: string; title: string | null; completed_at: string | null; created_at?: string | null }[] | null;
   interactions?: { id: string; interaction_type: string; interaction_date: string; subject: string | null; summary: string | null; is_automatic: boolean }[] | null;

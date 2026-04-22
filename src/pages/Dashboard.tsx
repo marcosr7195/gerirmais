@@ -10,6 +10,8 @@ interface Summary {
   pendingDeals: number;
   todayDeliveries: number;
   newLeads: number;
+  closedDealsThisMonth: number;
+  closedDealsValueThisMonth: number;
   upcomingBills: { id: string; description: string; amount: number; due_date: string }[];
   chartData: { month: string; receita: number; despesa: number }[];
 }
@@ -18,6 +20,7 @@ export default function Dashboard() {
   const { profile, user } = useAuth();
   const [summary, setSummary] = useState<Summary>({
     balance: 0, pendingDeals: 0, todayDeliveries: 0, newLeads: 0,
+    closedDealsThisMonth: 0, closedDealsValueThisMonth: 0,
     upcomingBills: [], chartData: []
   });
 
@@ -32,12 +35,13 @@ export default function Dashboard() {
     const today = now.toISOString().slice(0, 10);
     const in3days = new Date(now.getTime() + 3 * 86400000).toISOString().slice(0, 10);
 
-    const [txRes, dealsRes, osRes, leadsRes, billsRes] = await Promise.all([
+    const [txRes, dealsRes, osRes, leadsRes, billsRes, archivedDealsRes] = await Promise.all([
       supabase.from("transactions").select("*").eq("user_id", user!.id),
       supabase.from("deals").select("*").eq("user_id", user!.id).in("stage", ["lead", "negociando"]),
       supabase.from("service_orders").select("*").eq("user_id", user!.id).eq("due_date", today).neq("status", "concluido"),
       supabase.from("deals").select("*").eq("user_id", user!.id).eq("stage", "lead"),
       supabase.from("transactions").select("*").eq("user_id", user!.id).eq("type", "despesa").in("status", ["pendente"]).gte("due_date", today).lte("due_date", in3days),
+      supabase.from("deals").select("id, value, archived_at").eq("user_id", user!.id).not("archived_at", "is", null),
     ]);
 
     const transactions = txRes.data || [];
@@ -58,11 +62,16 @@ export default function Dashboard() {
       });
     }
 
+    const archivedDeals = ((archivedDealsRes.data || []) as any[]).filter((deal) => deal.archived_at?.startsWith(thisMonth));
+    const closedDealsValueThisMonth = archivedDeals.reduce((acc, deal) => acc + Number(deal.value || 0), 0);
+
     setSummary({
       balance,
       pendingDeals: dealsRes.data?.length || 0,
       todayDeliveries: osRes.data?.length || 0,
       newLeads: leadsRes.data?.length || 0,
+      closedDealsThisMonth: archivedDeals.length,
+      closedDealsValueThisMonth,
       upcomingBills: (billsRes.data || []).map(b => ({
         id: b.id, description: b.description, amount: Number(b.amount), due_date: b.due_date!,
       })),
@@ -76,7 +85,7 @@ export default function Dashboard() {
     { title: "Saldo do mês", value: fmt(summary.balance), icon: DollarSign, color: "text-primary" },
     { title: "Orçamentos pendentes", value: String(summary.pendingDeals), icon: FileText, color: "text-warning" },
     { title: "Entregas hoje", value: String(summary.todayDeliveries), icon: ClipboardList, color: "text-success" },
-    { title: "Leads novos", value: String(summary.newLeads), icon: Users, color: "text-primary" },
+    { title: "Negócios fechados no mês", value: `${summary.closedDealsThisMonth} · ${fmt(summary.closedDealsValueThisMonth)}`, icon: Users, color: "text-primary" },
   ];
 
   return (
