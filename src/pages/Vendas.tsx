@@ -618,6 +618,7 @@ export default function Vendas() {
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList>
           <TabsTrigger value="pipeline">Pipeline</TabsTrigger>
+          <TabsTrigger value="arquivo">Negócios fechados</TabsTrigger>
           <TabsTrigger value="clientes">Clientes</TabsTrigger>
           {viewClient && <TabsTrigger value="cliente-detalhe">Detalhes</TabsTrigger>}
         </TabsList>
@@ -625,7 +626,7 @@ export default function Vendas() {
         <TabsContent value="pipeline" className="mt-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {stages.map(stage => {
-              const stageDeals = deals.filter(d => d.stage === stage.key);
+              const stageDeals = visibleDeals.filter(d => d.stage === stage.key);
               return (
                 <div key={stage.key} className="space-y-3">
                   <div className="flex items-center justify-between">
@@ -661,6 +662,34 @@ export default function Vendas() {
               );
             })}
           </div>
+        </TabsContent>
+
+        <TabsContent value="arquivo" className="mt-4 space-y-4">
+          <Card>
+            <CardContent className="p-4">
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={archiveSearch}
+                  onChange={e => setArchiveSearch(e.target.value)}
+                  placeholder="Buscar por cliente ou serviço"
+                  className="pl-9"
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {archivedDeals.length === 0 ? (
+            <Card className="glass-card">
+              <CardContent className="p-8 text-center text-muted-foreground">Nenhum negócio arquivado encontrado</CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-3">
+              {archivedDeals.map((deal) => (
+                <ArchivedDealRow key={deal.id} deal={deal} onOpenDetails={openArchivedDetails} />
+              ))}
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="clientes" className="mt-4">
@@ -737,6 +766,12 @@ export default function Vendas() {
           onOpenChange={(v) => { if (!v) setProposalDeal(null); }}
         />
       )}
+
+      <ArchivedDealDetailsDialog
+        open={archivedDetailsOpen}
+        deal={archivedDeal}
+        onOpenChange={setArchivedDetailsOpen}
+      />
     </div>
   );
 }
