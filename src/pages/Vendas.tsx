@@ -189,6 +189,8 @@ export default function Vendas() {
     const { data, error } = await supabase.from("deals").insert({
       user_id: user!.id, title: dealForm.title, client_id: dealForm.client_id || null,
       stage: dealForm.stage, value: total, fixed_value: isFixedValue, notes: dealForm.notes || null,
+      closed_at: dealForm.stage === "fechado" ? new Date().toISOString() : null,
+      archived_at: null,
     } as any).select().single();
     if (error) { toast.error("Erro ao criar negócio"); return; }
     if (!isFixedValue) {
@@ -221,7 +223,11 @@ export default function Vendas() {
   const moveStage = async (dealId: string, newStage: string) => {
     const deal = deals.find(d => d.id === dealId);
     if (!deal) return;
-    const updateData: any = { stage: newStage };
+    const updateData: any = {
+      stage: newStage,
+      closed_at: newStage === "fechado" ? (deal.closed_at || new Date().toISOString()) : null,
+      archived_at: newStage === "fechado" ? null : deal.archived_at ?? null,
+    };
     if (newStage === "fechado" && !deal.os_created) {
       await createServiceOrder(dealId, deal.title, deal.client_id);
       updateData.os_created = true;
@@ -239,6 +245,8 @@ export default function Vendas() {
     const updateData: any = {
       title: editDeal.title, client_id: editDeal.client_id || null, stage: editDeal.stage,
       value: editDeal.value, fixed_value: editDeal.fixed_value, notes: editDeal.notes || null,
+      closed_at: editDeal.stage === "fechado" ? (editDeal.closed_at || new Date().toISOString()) : null,
+      archived_at: editDeal.stage === "fechado" ? null : editDeal.archived_at ?? null,
     };
     if (editDeal.stage === "fechado" && !editDeal.os_created) {
       await createServiceOrder(editDeal.id, editDeal.title, editDeal.client_id);
