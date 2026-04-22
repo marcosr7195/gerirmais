@@ -107,12 +107,56 @@ export default function Vendas() {
   const [editingClient, setEditingClient] = useState(false);
   const [editClientForm, setEditClientForm] = useState(emptyClientForm());
   const [proposalDeal, setProposalDeal] = useState<Deal | null>(null);
+  const [archiveSearch, setArchiveSearch] = useState("");
+  const [archivedDealId, setArchivedDealId] = useState<string | null>(null);
+  const [archivedDetailsOpen, setArchivedDetailsOpen] = useState(false);
 
   useEffect(() => { if (user) { loadDeals(); loadClients(); } }, [user]);
 
   const loadDeals = async () => {
-    const { data } = await supabase.from("deals").select("*, clients(*), deal_items(*)").eq("user_id", user!.id).order("created_at", { ascending: false });
-    setDeals((data || []).map(d => ({ ...d, value: Number(d.value), fixed_value: !!(d as any).fixed_value, os_created: !!(d as any).os_created, clients: d.clients as any, items: ((d as any).deal_items || []).map((i: any) => ({ description: i.description, quantity: Number(i.quantity), unit_price: Number(i.unit_price) })) })));
+    const { data } = await supabase
+      .from("deals")
+      .select("*, clients(*), deal_items(*), proposals(id, proposal_number, issue_date, total_value), service_orders(id, title, completed_at, created_at), interactions:client_interactions(id, interaction_type, interaction_date, subject, summary, is_automatic)")
+      .eq("user_id", user!.id)
+      .order("created_at", { ascending: false });
+
+    const dealData = (data || []) as any[];
+    const autoArchiveIds = dealData
+      .filter((deal) => {
+        const hasCompletedOrder = (deal.service_orders || []).some((order: any) => !!order.completed_at);
+        return deal.stage === "fechado" && !deal.archived_at && hasCompletedOrder;
+      })
+      .map((deal) => deal.id);
+
+    const staleClosedIds = dealData
+      .filter((deal) => deal.stage === "fechado" && !deal.archived_at && isOlderThanDays(deal.closed_at || deal.updated_at, RECENT_CLOSED_DAYS))
+      .map((deal) => deal.id);
+
+    const idsToArchive = Array.from(new Set([...autoArchiveIds, ...staleClosedIds]));
+
+    if (idsToArchive.length > 0) {
+      const archivedAt = new Date().toISOString();
+      const { error } = await supabase.from("deals").update({ archived_at: archivedAt } as any).in("id", idsToArchive);
+      if (!error) {
+        dealData.forEach((deal) => {
+          if (idsToArchive.includes(deal.id)) {
+            deal.archived_at = archivedAt;
+          }
+        });
+      }
+    }
+
+    setDeals(dealData.map(d => ({
+      ...d,
+      value: Number(d.value),
+      fixed_value: !!(d as any).fixed_value,
+      os_created: !!(d as any).os_created,
+      clients: d.clients as any,
+      proposals: (d.proposals || []) as any,
+      service_orders: (d.service_orders || []) as any,
+      interactions: (d.interactions || []) as any,
+      items: ((d as any).deal_items || []).map((i: any) => ({ description: i.description, quantity: Number(i.quantity), unit_price: Number(i.unit_price) })),
+    })));
   };
 
   const loadClients = async () => {
