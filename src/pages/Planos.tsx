@@ -22,9 +22,9 @@ const PLANS: PlanDef[] = [
     key: "starter",
     name: "Starter",
     tagline: "Para quem está começando",
-    price: "R$ 49",
+    price: "R$ 27",
     period: "/mês",
-    checkoutUrl: "https://pay.kiwify.com.br/seu-link-starter",
+    checkoutUrl: "https://pay.kiwify.com.br/8ymrxTU",
     features: [
       { label: "Dashboard", included: true },
       { label: "Finanças completo", included: true },
@@ -41,10 +41,10 @@ const PLANS: PlanDef[] = [
     key: "pro",
     name: "Pro",
     tagline: "Para profissionais que escalam",
-    price: "R$ 89",
+    price: "R$ 47",
     period: "/mês",
     highlighted: true,
-    checkoutUrl: "https://pay.kiwify.com.br/seu-link-pro",
+    checkoutUrl: "https://pay.kiwify.com.br/MGuRbSq",
     features: [
       { label: "Tudo do Starter", included: true },
       { label: "Proposta comercial em PDF", included: true },
@@ -59,9 +59,9 @@ const PLANS: PlanDef[] = [
     key: "scale",
     name: "Scale",
     tagline: "Para times e operações maiores",
-    price: "R$ 179",
+    price: "R$ 67",
     period: "/mês",
-    checkoutUrl: "https://pay.kiwify.com.br/seu-link-scale",
+    checkoutUrl: "https://pay.kiwify.com.br/p9XksyB",
     features: [
       { label: "Tudo do Pro", included: true },
       { label: "Múltiplos usuários", included: true },
@@ -78,7 +78,10 @@ export default function Planos() {
     <div className="space-y-8 animate-fade-in max-w-6xl mx-auto">
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="sm" asChild>
-          <Link to="/"><ArrowLeft className="h-4 w-4 mr-1" />Voltar</Link>
+          <Link to="/">
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            Voltar
+          </Link>
         </Button>
       </div>
 
@@ -99,13 +102,8 @@ export default function Planos() {
         {PLANS.map((p) => {
           const isCurrent = !isTrial && status === "ativo" && plan === p.key;
           return (
-            <Card
-              key={p.key}
-              className={`relative ${p.highlighted ? "border-primary shadow-lg scale-[1.02]" : ""}`}
-            >
-              {p.highlighted && (
-                <Badge className="absolute -top-3 left-1/2 -translate-x-1/2">Mais popular</Badge>
-              )}
+            <Card key={p.key} className={`relative ${p.highlighted ? "border-primary shadow-lg scale-[1.02]" : ""}`}>
+              {p.highlighted && <Badge className="absolute -top-3 left-1/2 -translate-x-1/2">Mais popular</Badge>}
               <CardHeader>
                 <CardTitle className="text-2xl">{p.name}</CardTitle>
                 <p className="text-sm text-muted-foreground">{p.tagline}</p>
@@ -123,18 +121,11 @@ export default function Planos() {
                       ) : (
                         <X className="h-4 w-4 text-muted-foreground/50 mt-0.5 shrink-0" />
                       )}
-                      <span className={f.included ? "" : "text-muted-foreground/60 line-through"}>
-                        {f.label}
-                      </span>
+                      <span className={f.included ? "" : "text-muted-foreground/60 line-through"}>{f.label}</span>
                     </li>
                   ))}
                 </ul>
-                <Button
-                  asChild
-                  className="w-full"
-                  variant={p.highlighted ? "default" : "outline"}
-                  disabled={isCurrent}
-                >
+                <Button asChild className="w-full" variant={p.highlighted ? "default" : "outline"} disabled={isCurrent}>
                   <a href={p.checkoutUrl} target="_blank" rel="noopener noreferrer">
                     {isCurrent ? "Plano atual" : `Assinar ${p.name}`}
                   </a>
@@ -147,7 +138,8 @@ export default function Planos() {
 
       <Card className="bg-muted/30">
         <CardContent className="p-6 text-center text-sm text-muted-foreground">
-          Pagamentos processados com segurança via Kiwify. Após a confirmação do pagamento, seu plano é ativado automaticamente.
+          Pagamentos processados com segurança via Kiwify. Após a confirmação do pagamento, seu plano é ativado
+          automaticamente.
         </CardContent>
       </Card>
     </div>
