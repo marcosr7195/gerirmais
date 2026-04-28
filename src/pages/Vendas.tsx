@@ -95,6 +95,17 @@ const cepMask = (v: string) => {
 
 export default function Vendas() {
   const { user } = useAuth();
+  const { hasFeature } = usePlan();
+  const navigate = useNavigate();
+  const handleOpenProposal = (deal: Deal) => {
+    if (!hasFeature("proposta_pdf")) {
+      toast.error("Esta funcionalidade está disponível no plano Pro — clique aqui para fazer upgrade", {
+        action: { label: "Ver planos", onClick: () => navigate("/planos") },
+      });
+      return;
+    }
+    setProposalDeal(deal);
+  };
   const [deals, setDeals] = useState<Deal[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [tab, setTab] = useState("pipeline");
@@ -652,7 +663,7 @@ export default function Vendas() {
                           <p className="text-sm font-semibold text-primary">{fmt(deal.value)}</p>
                           {deal.fixed_value && <Badge variant="secondary" className="text-[10px]">Valor fixo</Badge>}
                           <div className="flex gap-1 flex-wrap">
-                            <Button variant="ghost" size="sm" className="text-xs h-6 px-2" onClick={() => setProposalDeal(deal)}>
+                            <Button variant="ghost" size="sm" className="text-xs h-6 px-2" onClick={() => handleOpenProposal(deal)}>
                               <FileText className="h-3 w-3 mr-1" />Proposta
                             </Button>
                             {stages.filter(s => s.key !== deal.stage).map(s => (
