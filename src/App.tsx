@@ -29,7 +29,14 @@ function AppRoutes() {
     );
   }
 
-  if (!user) return <Auth />;
+  if (!user) {
+    return (
+      <Routes>
+        <Route path="/inicio" element={<Inicio />} />
+        <Route path="*" element={<Auth />} />
+      </Routes>
+    );
+  }
   if (profile && !profile.onboarding_completed) return <Onboarding />;
 
   return (
