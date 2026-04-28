@@ -42,6 +42,7 @@ function AppRoutes() {
   return (
     <AppLayout>
       <Routes>
+        <Route path="/inicio" element={<Inicio />} />
         <Route path="/" element={<Dashboard />} />
         <Route path="/financas" element={<Financas />} />
         <Route path="/vendas" element={<Vendas />} />
