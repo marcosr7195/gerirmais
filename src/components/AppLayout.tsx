@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
+import { TrialBanner } from "./TrialBanner";
 
 export function AppLayout({ children }: { children: ReactNode }) {
   return (
@@ -8,6 +9,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
       <div className="min-h-screen flex w-full">
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0">
+          <TrialBanner />
           <header className="h-14 flex items-center border-b bg-card px-4 shrink-0">
             <SidebarTrigger />
           </header>

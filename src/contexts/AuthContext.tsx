@@ -33,6 +33,11 @@ interface Profile {
   pix_key: string | null;
   account_holder: string | null;
   logo_url: string | null;
+  plano: "starter" | "pro" | "scale" | null;
+  status_assinatura: "trial" | "ativo" | "inativo" | "atrasado" | null;
+  data_inicio: string | null;
+  data_vencimento: string | null;
+  origem: string | null;
 }
 
 interface AuthContextType {
