@@ -17,6 +17,9 @@ import { ProposalGenerator } from "@/components/ProposalGenerator";
 import { ClientHistory } from "@/components/ClientHistory";
 import { ArchivedDealRow } from "@/components/sales/ArchivedDealRow";
 import { ArchivedDealDetailsDialog } from "@/components/sales/ArchivedDealDetailsDialog";
+import { FeatureGate } from "@/components/FeatureGate";
+import { usePlan } from "@/hooks/usePlan";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 interface Client {
@@ -540,7 +543,9 @@ export default function Vendas() {
           </Card>
         </div>
 
-        <ClientHistory clientId={c.id} />
+        <FeatureGate feature="historico_cliente">
+          <ClientHistory clientId={c.id} />
+        </FeatureGate>
       </div>
     );
   };
