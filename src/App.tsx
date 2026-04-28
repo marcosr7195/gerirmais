@@ -8,6 +8,7 @@ import { AppLayout } from "@/components/AppLayout";
 import Auth from "./pages/Auth";
 import Onboarding from "./pages/Onboarding";
 import Dashboard from "./pages/Dashboard";
+import Inicio from "./pages/Inicio";
 import Financas from "./pages/Financas";
 import Vendas from "./pages/Vendas";
 import Entregas from "./pages/Entregas";
@@ -28,12 +29,20 @@ function AppRoutes() {
     );
   }
 
-  if (!user) return <Auth />;
+  if (!user) {
+    return (
+      <Routes>
+        <Route path="/inicio" element={<Inicio />} />
+        <Route path="*" element={<Auth />} />
+      </Routes>
+    );
+  }
   if (profile && !profile.onboarding_completed) return <Onboarding />;
 
   return (
     <AppLayout>
       <Routes>
+        <Route path="/inicio" element={<Inicio />} />
         <Route path="/" element={<Dashboard />} />
         <Route path="/financas" element={<Financas />} />
         <Route path="/vendas" element={<Vendas />} />
