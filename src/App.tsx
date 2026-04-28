@@ -32,7 +32,9 @@ function AppRoutes() {
   if (!user) {
     return (
       <Routes>
+        <Route path="/" element={<Inicio />} />
         <Route path="/inicio" element={<Inicio />} />
+        <Route path="/auth" element={<Auth />} />
         <Route path="*" element={<Auth />} />
       </Routes>
     );
