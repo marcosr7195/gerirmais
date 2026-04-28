@@ -12,6 +12,7 @@ import Financas from "./pages/Financas";
 import Vendas from "./pages/Vendas";
 import Entregas from "./pages/Entregas";
 import Configuracoes from "./pages/Configuracoes";
+import Planos from "./pages/Planos";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -38,6 +39,7 @@ function AppRoutes() {
         <Route path="/vendas" element={<Vendas />} />
         <Route path="/entregas" element={<Entregas />} />
         <Route path="/configuracoes" element={<Configuracoes />} />
+        <Route path="/planos" element={<Planos />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AppLayout>

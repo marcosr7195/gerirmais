@@ -320,6 +320,8 @@ export type Database = {
           company_name: string | null
           complement: string | null
           created_at: string | null
+          data_inicio: string
+          data_vencimento: string
           document: string | null
           fiscal_document: string | null
           fiscal_type: string | null
@@ -329,12 +331,15 @@ export type Database = {
           neighborhood: string | null
           number: string | null
           onboarding_completed: boolean | null
+          origem: string | null
           owner_name: string | null
           owner_role: string | null
           pix_key: string | null
+          plano: string
           service_type: string | null
           slogan: string | null
           state: string | null
+          status_assinatura: string
           street: string | null
           updated_at: string | null
           user_id: string
@@ -354,6 +359,8 @@ export type Database = {
           company_name?: string | null
           complement?: string | null
           created_at?: string | null
+          data_inicio?: string
+          data_vencimento?: string
           document?: string | null
           fiscal_document?: string | null
           fiscal_type?: string | null
@@ -363,12 +370,15 @@ export type Database = {
           neighborhood?: string | null
           number?: string | null
           onboarding_completed?: boolean | null
+          origem?: string | null
           owner_name?: string | null
           owner_role?: string | null
           pix_key?: string | null
+          plano?: string
           service_type?: string | null
           slogan?: string | null
           state?: string | null
+          status_assinatura?: string
           street?: string | null
           updated_at?: string | null
           user_id: string
@@ -388,6 +398,8 @@ export type Database = {
           company_name?: string | null
           complement?: string | null
           created_at?: string | null
+          data_inicio?: string
+          data_vencimento?: string
           document?: string | null
           fiscal_document?: string | null
           fiscal_type?: string | null
@@ -397,12 +409,15 @@ export type Database = {
           neighborhood?: string | null
           number?: string | null
           onboarding_completed?: boolean | null
+          origem?: string | null
           owner_name?: string | null
           owner_role?: string | null
           pix_key?: string | null
+          plano?: string
           service_type?: string | null
           slogan?: string | null
           state?: string | null
+          status_assinatura?: string
           street?: string | null
           updated_at?: string | null
           user_id?: string
