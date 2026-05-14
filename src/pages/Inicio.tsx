@@ -125,7 +125,7 @@ export default function Inicio() {
       <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <Link to="/inicio" className="flex items-center gap-2">
-            <img src={logoCompleta} alt="Gerir+" className="h-8" />
+            <img src={logoCompleta} alt="Gerir+" className="h-10 sm:h-12 w-auto object-contain" />
           </Link>
           <nav className="hidden md:flex items-center gap-6 text-sm">
             <a href="#funcionalidades" className="text-muted-foreground hover:text-foreground transition-colors">
@@ -375,7 +375,7 @@ export default function Inicio() {
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
             <div className="space-y-3">
-              <img src={logoCompleta} alt="Gerir+" className="h-8" />
+              <img src={logoCompleta} alt="Gerir+" className="h-12 w-auto object-contain" />
               <p className="text-sm text-muted-foreground">
                 O sistema completo para o pequeno empresário gerir e crescer.
               </p>

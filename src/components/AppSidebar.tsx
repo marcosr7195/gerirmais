@@ -2,6 +2,7 @@ import { LayoutDashboard, DollarSign, Handshake, ClipboardList, LogOut, Settings
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import logoCompleta from "@/assets/logo-completa.png";
 import iconG from "@/assets/icon-g.png";
 import {
   Sidebar,
@@ -33,11 +34,12 @@ export function AppSidebar() {
       <SidebarContent>
         <div className={`p-4 ${collapsed ? "px-2" : ""}`}>
           <div className="flex items-center gap-2">
-            <img src={iconG} alt="GerirMais" className="w-8 h-8 rounded-lg shrink-0" />
-            {!collapsed && (
-              <div className="min-w-0">
-                <p className="text-sidebar-primary-foreground font-semibold text-sm truncate">GerirMais</p>
-                <p className="text-sidebar-foreground/60 text-xs truncate">{profile?.business_name || "Meu Negócio"}</p>
+            {collapsed ? (
+              <img src={iconG} alt="Gerir+" className="w-8 h-8 rounded-lg shrink-0" />
+            ) : (
+              <div className="min-w-0 flex-1">
+                <img src={logoCompleta} alt="Gerir+" className="h-10 w-auto object-contain" />
+                <p className="text-sidebar-foreground/60 text-xs truncate mt-1">{profile?.business_name || "Meu Negócio"}</p>
               </div>
             )}
           </div>
