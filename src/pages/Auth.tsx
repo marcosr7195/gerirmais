@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import iconG from "@/assets/icon-g.png";
+import logoCompleta from "@/assets/logo-completa.png";
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
@@ -36,9 +36,8 @@ export default function Auth() {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md animate-fade-in">
         <CardHeader className="text-center space-y-2">
-          <div className="flex items-center justify-center gap-3">
-            <img src={iconG} alt="GerirMais" className="w-10 h-10 rounded-lg" />
-            <span className="text-2xl font-bold text-foreground">GerirMais</span>
+          <div className="flex items-center justify-center">
+            <img src={logoCompleta} alt="Gerir+" className="h-14 sm:h-16 w-auto object-contain" />
           </div>
           <p className="text-muted-foreground text-sm">
             {isLogin ? "Entre na sua conta" : "Crie sua conta gratuita"}
