@@ -19,7 +19,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import logoCompleta from "@/assets/logo-completa.png";
 
@@ -333,6 +333,7 @@ export default function Inicio() {
                 <CardContent className="p-6 space-y-4">
                   <div className="flex items-center gap-3">
                     <Avatar>
+                      <AvatarImage src={d.avatar} alt={d.name} />
                       <AvatarFallback className="bg-primary/10 text-primary">
                         {d.name.charAt(0)}
                       </AvatarFallback>
@@ -342,7 +343,7 @@ export default function Inicio() {
                       <p className="text-xs text-muted-foreground">{d.role}</p>
                     </div>
                   </div>
-                  <p className="text-sm text-muted-foreground italic">"Depoimento em breve"</p>
+                  <p className="text-sm text-muted-foreground italic">"{d.text}"</p>
                 </CardContent>
               </Card>
             ))}
@@ -399,14 +400,16 @@ export default function Inicio() {
               <h4 className="font-semibold text-sm">Legal</h4>
               <ul className="space-y-2 text-sm">
                 <li>
-                  <Link to="/termos" className="text-muted-foreground hover:text-foreground">
+                  <span className="text-muted-foreground inline-flex items-center gap-2">
                     Termos de Uso
-                  </Link>
+                    <Badge variant="outline" className="text-[10px]">Em breve</Badge>
+                  </span>
                 </li>
                 <li>
-                  <Link to="/privacidade" className="text-muted-foreground hover:text-foreground">
+                  <span className="text-muted-foreground inline-flex items-center gap-2">
                     Política de Privacidade
-                  </Link>
+                    <Badge variant="outline" className="text-[10px]">Em breve</Badge>
+                  </span>
                 </li>
               </ul>
             </div>
@@ -424,13 +427,13 @@ export default function Inicio() {
                 </li>
                 <li>
                   <a
-                    href="https://instagram.com/gerirmais"
+                    href="https://instagram.com/gerirmaisoficial"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-muted-foreground hover:text-foreground inline-flex items-center gap-2"
                   >
                     <Instagram className="h-4 w-4" />
-                    @gerirmais
+                    @gerirmaisoficial
                   </a>
                 </li>
               </ul>
