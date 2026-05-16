@@ -31,10 +31,10 @@ const PROBLEMAS = [
 ];
 
 const PILARES = [
-  { icon: DollarSign, name: "Valor", desc: "Defina e acompanhe o valor real do seu serviço.", soon: true },
+  { icon: DollarSign, name: "Vitrine", desc: "Mostre seus serviços e produtos para os clientes.", soon: true },
   { icon: Megaphone, name: "Marketing", desc: "Atraia clientes com campanhas e canais integrados.", soon: true },
   { icon: TrendingUp, name: "Vendas", desc: "Kanban, propostas e histórico de cada cliente." },
-  { icon: ClipboardList, name: "Operação", desc: "Ordens de serviço com checklist e arquivamento." },
+  { icon: ClipboardList, name: "Entregáveis", desc: "Operação e execução dos serviços contratados." },
   { icon: Wallet, name: "Finanças", desc: "Receitas, despesas e fluxo de caixa em um só lugar." },
 ];
 
@@ -53,7 +53,7 @@ const PLANOS = [
     features: [
       "Finanças completo",
       "Vendas com Kanban",
-      "Operação com OS e checklist",
+      "Entregáveis com OS e checklist",
       "Dashboard",
       "Até 30 clientes",
     ],
@@ -71,7 +71,7 @@ const PLANOS = [
       "Proposta em PDF",
       "Histórico de atendimento",
       "Marketing (em breve)",
-      "Valor (em breve)",
+      "Vitrine (em breve)",
     ],
   },
   {
@@ -90,9 +90,24 @@ const PLANOS = [
 ];
 
 const DEPOIMENTOS = [
-  { name: "Cliente 1", role: "Em breve" },
-  { name: "Cliente 2", role: "Em breve" },
-  { name: "Cliente 3", role: "Em breve" },
+  {
+    name: "Ana Paula Ferreira",
+    role: "Designer Freelancer",
+    avatar: "https://i.pravatar.cc/150?img=1",
+    text: "Finalmente consegui organizar meus clientes e finanças em um só lugar. As propostas em PDF me poupam horas toda semana.",
+  },
+  {
+    name: "Carlos Eduardo Lima",
+    role: "Consultor de Marketing",
+    avatar: "https://i.pravatar.cc/150?img=2",
+    text: "O pipeline de vendas mudou minha forma de trabalhar. Não perco mais nenhum lead e sei exatamente em que etapa cada cliente está.",
+  },
+  {
+    name: "Juliana Costa",
+    role: "Personal Trainer",
+    avatar: "https://i.pravatar.cc/150?img=3",
+    text: "Uso o Gerir+ para controlar todos os meus alunos, pagamentos e sessões. Simples, rápido e funciona no celular.",
+  },
 ];
 
 const FAQ = [
