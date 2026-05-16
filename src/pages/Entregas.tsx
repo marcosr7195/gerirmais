@@ -21,6 +21,7 @@ interface ChecklistItem {
   service_order_id?: string;
   title: string;
   completed: boolean | null;
+  due_date?: string | null;
 }
 
 interface ServiceOrder {
@@ -65,6 +66,7 @@ export default function Entregas() {
   const [checklistInput, setChecklistInput] = useState("");
   const [selectedOS, setSelectedOS] = useState<string | null>(null);
   const [newCheckItem, setNewCheckItem] = useState("");
+  const [newCheckDate, setNewCheckDate] = useState("");
   const [saving, setSaving] = useState(false);
   const [archiveSearch, setArchiveSearch] = useState("");
   const [detailsOpen, setDetailsOpen] = useState(false);
@@ -241,6 +243,11 @@ export default function Entregas() {
     void load();
   };
 
+  const updateCheckDate = async (checkId: string, dueDate: string) => {
+    await supabase.from("checklist_items").update({ due_date: dueDate || null }).eq("id", checkId);
+    void load();
+  };
+
   const addCheckItem = async (osId: string) => {
     if (!user || !newCheckItem.trim()) return;
     await supabase.from("checklist_items").insert({
@@ -248,8 +255,10 @@ export default function Entregas() {
       service_order_id: osId,
       title: newCheckItem.trim(),
       completed: false,
+      due_date: newCheckDate || null,
     });
     setNewCheckItem("");
+    setNewCheckDate("");
     void load();
   };
 
@@ -332,7 +341,7 @@ export default function Entregas() {
     <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Operação</h1>
+          <h1 className="text-2xl font-bold">Entregáveis</h1>
           <p className="text-muted-foreground">Ordens ativas e arquivo de serviços concluídos</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
@@ -521,19 +530,45 @@ export default function Entregas() {
 
                     {expanded && (
                       <div className="mt-4 space-y-2 border-t pt-4">
-                        {(os.checklist || []).map((item) => (
-                          <div key={item.id} className="flex items-center gap-2">
-                            <Checkbox checked={!!item.completed} onCheckedChange={() => toggleCheck(item.id, !!item.completed)} />
-                            <span className={`text-sm ${item.completed ? "line-through text-muted-foreground" : ""}`}>{item.title}</span>
-                          </div>
-                        ))}
-                        <div className="mt-2 flex gap-2">
+                        {(os.checklist || []).map((item) => {
+                          const today = new Date().toISOString().slice(0, 10);
+                          const overdue = !!item.due_date && !item.completed && item.due_date < today;
+                          return (
+                            <div key={item.id} className="flex items-center gap-2">
+                              <Checkbox checked={!!item.completed} onCheckedChange={() => toggleCheck(item.id, !!item.completed)} />
+                              <span className={`text-sm ${item.completed ? "line-through text-muted-foreground" : ""}`}>
+                                {item.title}
+                                {item.due_date && (
+                                  <span className={`ml-2 inline-flex items-center gap-1 text-xs ${overdue ? "text-destructive font-medium" : "text-muted-foreground"}`}>
+                                    {overdue && <AlertTriangle className="h-3 w-3" />}
+                                    · até {formatCompactDate(item.due_date)}
+                                  </span>
+                                )}
+                              </span>
+                              <Input
+                                type="date"
+                                value={item.due_date || ""}
+                                onChange={(e) => updateCheckDate(item.id, e.target.value)}
+                                className="ml-auto h-7 w-auto text-xs"
+                                title="Data de entrega"
+                              />
+                            </div>
+                          );
+                        })}
+                        <div className="mt-2 flex flex-col gap-2 sm:flex-row">
                           <Input
                             placeholder="Novo item..."
                             value={newCheckItem}
                             onChange={(e) => setNewCheckItem(e.target.value)}
                             onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), void addCheckItem(os.id))}
                             className="h-8 text-sm"
+                          />
+                          <Input
+                            type="date"
+                            value={newCheckDate}
+                            onChange={(e) => setNewCheckDate(e.target.value)}
+                            className="h-8 w-full text-sm sm:w-40"
+                            title="Data de entrega (opcional)"
                           />
                           <Button size="sm" variant="outline" onClick={() => addCheckItem(os.id)}>
                             +
