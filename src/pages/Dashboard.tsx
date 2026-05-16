@@ -35,9 +35,9 @@ export default function Dashboard() {
     const today = now.toISOString().slice(0, 10);
     const in3days = new Date(now.getTime() + 3 * 86400000).toISOString().slice(0, 10);
 
-    const [txRes, dealsRes, osRes, leadsRes, billsRes, archivedDealsRes] = await Promise.all([
+    const [txRes, proposalsRes, osRes, leadsRes, billsRes, archivedDealsRes] = await Promise.all([
       supabase.from("transactions").select("*").eq("user_id", user!.id),
-      supabase.from("deals").select("*").eq("user_id", user!.id).in("stage", ["lead", "negociando"]),
+      supabase.from("proposals").select("id", { count: "exact", head: true }).eq("user_id", user!.id),
       supabase.from("service_orders").select("*").eq("user_id", user!.id).eq("due_date", today).neq("status", "concluido"),
       supabase.from("deals").select("*").eq("user_id", user!.id).eq("stage", "lead"),
       supabase.from("transactions").select("*").eq("user_id", user!.id).eq("type", "despesa").in("status", ["pendente"]).gte("due_date", today).lte("due_date", in3days),
@@ -67,7 +67,7 @@ export default function Dashboard() {
 
     setSummary({
       balance,
-      pendingDeals: dealsRes.data?.length || 0,
+      pendingDeals: proposalsRes.count || 0,
       todayDeliveries: osRes.data?.length || 0,
       newLeads: leadsRes.data?.length || 0,
       closedDealsThisMonth: archivedDeals.length,
