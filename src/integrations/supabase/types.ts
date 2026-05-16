@@ -45,6 +45,7 @@ export type Database = {
         Row: {
           completed: boolean | null
           created_at: string | null
+          due_date: string | null
           id: string
           service_order_id: string
           title: string
@@ -53,6 +54,7 @@ export type Database = {
         Insert: {
           completed?: boolean | null
           created_at?: string | null
+          due_date?: string | null
           id?: string
           service_order_id: string
           title: string
@@ -61,6 +63,7 @@ export type Database = {
         Update: {
           completed?: boolean | null
           created_at?: string | null
+          due_date?: string | null
           id?: string
           service_order_id?: string
           title?: string
