@@ -20,7 +20,7 @@ const items = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Finanças", url: "/financas", icon: DollarSign },
   { title: "Vendas", url: "/vendas", icon: Handshake },
-  { title: "Operação", url: "/entregas", icon: ClipboardList },
+  { title: "Entregáveis", url: "/entregas", icon: ClipboardList },
 ];
 
 export function AppSidebar() {

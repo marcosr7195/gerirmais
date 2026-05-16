@@ -29,7 +29,7 @@ const PLANS: PlanDef[] = [
       { label: "Dashboard", included: true },
       { label: "Finanças completo", included: true },
       { label: "Vendas (Kanban)", included: true },
-      { label: "Operação (OS + checklist)", included: true },
+      { label: "Entregáveis (OS + checklist)", included: true },
       { label: "Proposta comercial em PDF", included: false },
       { label: "Histórico de atendimento", included: false },
       { label: "Marketing", included: false },

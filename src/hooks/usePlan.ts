@@ -33,7 +33,7 @@ const FEATURE_MIN_PLAN: Record<FeatureKey, PlanTier> = {
 export const FEATURE_LABELS: Record<FeatureKey, string> = {
   financas: "Finanças",
   vendas: "Vendas",
-  operacao: "Operação",
+  operacao: "Entregáveis",
   dashboard: "Dashboard",
   proposta_pdf: "Proposta em PDF",
   historico_cliente: "Histórico do cliente",
