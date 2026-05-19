@@ -13,6 +13,7 @@ import Financas from "./pages/Financas";
 import Vendas from "./pages/Vendas";
 import Entregas from "./pages/Entregas";
 import Vitrine from "./pages/Vitrine";
+import Marketing from "./pages/Marketing";
 import VitrinePublica from "./pages/VitrinePublica";
 import Configuracoes from "./pages/Configuracoes";
 import Planos from "./pages/Planos";
@@ -55,6 +56,7 @@ function AppRoutes() {
         <Route path="/vendas" element={<Vendas />} />
         <Route path="/entregas" element={<Entregas />} />
         <Route path="/vitrine" element={<Vitrine />} />
+        <Route path="/marketing" element={<Marketing />} />
         <Route path="/configuracoes" element={<Configuracoes />} />
         <Route path="/planos" element={<Planos />} />
         <Route path="*" element={<NotFound />} />
