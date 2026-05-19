@@ -1,4 +1,4 @@
-import { LayoutDashboard, DollarSign, Handshake, ClipboardList, LogOut, Settings } from "lucide-react";
+import { LayoutDashboard, DollarSign, Handshake, ClipboardList, LogOut, Settings, Store } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -18,6 +18,7 @@ import {
 
 const items = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
+  { title: "Vitrine", url: "/vitrine", icon: Store },
   { title: "Finanças", url: "/financas", icon: DollarSign },
   { title: "Vendas", url: "/vendas", icon: Handshake },
   { title: "Entregáveis", url: "/entregas", icon: ClipboardList },
