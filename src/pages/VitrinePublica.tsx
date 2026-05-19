@@ -73,7 +73,7 @@ export default function VitrinePublica() {
     setItems(data.items || []);
   };
 
-  const url = typeof window !== "undefined" ? window.location.href : "";
+  const url = slug ? `https://app.gerirmais.com.br/vitrine/${slug}` : "";
 
   const copyLink = async () => {
     await navigator.clipboard.writeText(url);
@@ -189,7 +189,7 @@ export default function VitrinePublica() {
                   {whatsappDigits && (
                     <Button size="sm" asChild className="w-full">
                       <a
-                        href={`https://wa.me/${whatsappDigits}?text=${encodeURIComponent(`Olá! Tenho interesse em: ${it.name}`)}`}
+                        href={`https://wa.me/${whatsappDigits}?text=${encodeURIComponent(`Olá! Tenho interesse no serviço ${it.name}. Pode me passar mais informações?`)}`}
                         target="_blank"
                         rel="noopener noreferrer"
                       >
