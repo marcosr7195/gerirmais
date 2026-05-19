@@ -189,11 +189,11 @@ export default function Marketing() {
 
   const injectVars = (text: string) =>
     text
-      .replaceAll("{negocio}", businessName || "seu negócio")
-      .replaceAll("{servico}", mainService || "seu serviço")
-      .replaceAll("{cliente}", "[Nome do Cliente]")
-      .replaceAll("{cliente_indicador}", "[Nome do Indicador]")
-      .replaceAll("{parceiro}", "[Nome do Parceiro]");
+      .replace(/\{negocio\}/g, businessName || "seu negócio")
+      .replace(/\{servico\}/g, mainService || "seu serviço")
+      .replace(/\{cliente\}/g, "[Nome do Cliente]")
+      .replace(/\{cliente_indicador\}/g, "[Nome do Indicador]")
+      .replace(/\{parceiro\}/g, "[Nome do Parceiro]");
 
   const openCopy = (title: string, rawText: string) => {
     const text = injectVars(rawText);
