@@ -108,6 +108,7 @@ export default function Vendas() {
   };
   const [deals, setDeals] = useState<Deal[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
+  const [vitrineItems, setVitrineItems] = useState<{ id: string; name: string; price_min: number | null; price_type: string }[]>([]);
   const [tab, setTab] = useState("pipeline");
   const [dealOpen, setDealOpen] = useState(false);
   const [clientOpen, setClientOpen] = useState(false);
@@ -125,7 +126,17 @@ export default function Vendas() {
   const [archivedDealId, setArchivedDealId] = useState<string | null>(null);
   const [archivedDetailsOpen, setArchivedDetailsOpen] = useState(false);
 
-  useEffect(() => { if (user) { loadDeals(); loadClients(); } }, [user]);
+  useEffect(() => { if (user) { loadDeals(); loadClients(); loadVitrine(); } }, [user]);
+
+  const loadVitrine = async () => {
+    const { data } = await supabase
+      .from("vitrine_items" as any)
+      .select("id, name, price_min, price_type")
+      .eq("user_id", user!.id)
+      .eq("status", "ativo")
+      .order("name");
+    setVitrineItems((data as any) || []);
+  };
 
   const loadDeals = async () => {
     const { data } = await supabase
@@ -619,7 +630,29 @@ export default function Vendas() {
                         </div>
                       ))}
                     </div>
-                    <Button type="button" variant="ghost" size="sm" className="mt-2" onClick={addItem}><Plus className="h-3 w-3 mr-1" />Adicionar item</Button>
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      <Button type="button" variant="ghost" size="sm" onClick={addItem}><Plus className="h-3 w-3 mr-1" />Adicionar item</Button>
+                      {vitrineItems.length > 0 && (
+                        <Select
+                          value=""
+                          onValueChange={(id) => {
+                            const v = vitrineItems.find((x) => x.id === id);
+                            if (!v) return;
+                            setDealItems((prev) => {
+                              const cleaned = prev.filter((i) => i.description.trim() || i.unit_price > 0);
+                              return [...cleaned, { description: v.name, quantity: 1, unit_price: Number(v.price_min || 0) }];
+                            });
+                          }}
+                        >
+                          <SelectTrigger className="h-8 w-auto text-xs"><SelectValue placeholder="+ Adicionar da Vitrine" /></SelectTrigger>
+                          <SelectContent>
+                            {vitrineItems.map((v) => (
+                              <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    </div>
                     <p className="text-sm font-medium mt-2">Total: {fmt(total)}</p>
                   </div>
                 )}

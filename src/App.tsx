@@ -12,6 +12,8 @@ import Inicio from "./pages/Inicio";
 import Financas from "./pages/Financas";
 import Vendas from "./pages/Vendas";
 import Entregas from "./pages/Entregas";
+import Vitrine from "./pages/Vitrine";
+import VitrinePublica from "./pages/VitrinePublica";
 import Configuracoes from "./pages/Configuracoes";
 import Planos from "./pages/Planos";
 import NotFound from "./pages/NotFound";
@@ -34,6 +36,7 @@ function AppRoutes() {
       <Routes>
         <Route path="/" element={<Inicio />} />
         <Route path="/inicio" element={<Inicio />} />
+        <Route path="/vitrine/:slug" element={<VitrinePublica />} />
         <Route path="/auth" element={<Auth />} />
         <Route path="*" element={<Auth />} />
       </Routes>
@@ -44,12 +47,14 @@ function AppRoutes() {
   return (
     <AppLayout>
       <Routes>
+        <Route path="/vitrine/:slug" element={<VitrinePublica />} />
         <Route path="/inicio" element={<Inicio />} />
         <Route path="/" element={<Dashboard />} />
         <Route path="/auth" element={<Navigate to="/" replace />} />
         <Route path="/financas" element={<Financas />} />
         <Route path="/vendas" element={<Vendas />} />
         <Route path="/entregas" element={<Entregas />} />
+        <Route path="/vitrine" element={<Vitrine />} />
         <Route path="/configuracoes" element={<Configuracoes />} />
         <Route path="/planos" element={<Planos />} />
         <Route path="*" element={<NotFound />} />

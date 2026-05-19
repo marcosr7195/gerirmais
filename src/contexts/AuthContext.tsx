@@ -38,6 +38,7 @@ interface Profile {
   data_inicio: string | null;
   data_vencimento: string | null;
   origem: string | null;
+  slug: string | null;
 }
 
 interface AuthContextType {
