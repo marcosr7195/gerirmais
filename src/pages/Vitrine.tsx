@@ -74,7 +74,7 @@ export default function Vitrine() {
     return "";
   }, [profile]);
 
-  const publicUrl = useMemo(() => (slug ? `${window.location.origin}/vitrine/${slug}` : ""), [slug]);
+  const publicUrl = useMemo(() => (slug ? `https://app.gerirmais.com.br/vitrine/${slug}` : ""), [slug]);
 
   useEffect(() => {
     if (user) void load();
