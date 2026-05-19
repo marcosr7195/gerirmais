@@ -341,6 +341,7 @@ export type Database = {
           plano: string
           service_type: string | null
           slogan: string | null
+          slug: string | null
           state: string | null
           status_assinatura: string
           street: string | null
@@ -380,6 +381,7 @@ export type Database = {
           plano?: string
           service_type?: string | null
           slogan?: string | null
+          slug?: string | null
           state?: string | null
           status_assinatura?: string
           street?: string | null
@@ -419,6 +421,7 @@ export type Database = {
           plano?: string
           service_type?: string | null
           slogan?: string | null
+          slug?: string | null
           state?: string | null
           status_assinatura?: string
           street?: string | null
@@ -624,12 +627,63 @@ export type Database = {
           },
         ]
       }
+      vitrine_items: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          duration: string | null
+          id: string
+          image_url: string | null
+          name: string
+          price_max: number | null
+          price_min: number | null
+          price_type: string
+          sort_order: number
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          duration?: string | null
+          id?: string
+          image_url?: string | null
+          name: string
+          price_max?: number | null
+          price_min?: number | null
+          price_type?: string
+          sort_order?: number
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          duration?: string | null
+          id?: string
+          image_url?: string | null
+          name?: string
+          price_max?: number | null
+          price_min?: number | null
+          price_type?: string
+          sort_order?: number
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_vitrine_by_slug: { Args: { p_slug: string }; Returns: Json }
     }
     Enums: {
       [_ in never]: never
