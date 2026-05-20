@@ -1,4 +1,4 @@
-import { LayoutDashboard, DollarSign, Handshake, ClipboardList, LogOut, Settings, Store, Megaphone } from "lucide-react";
+import { LayoutDashboard, DollarSign, Handshake, ClipboardList, LogOut, Settings, Store, Megaphone, Shield } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -29,7 +29,8 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
-  const { signOut, profile } = useAuth();
+  const { signOut, profile, user } = useAuth();
+  const isAdmin = user?.email?.toLowerCase() === "marcos7195@gmail.com";
 
   return (
     <Sidebar collapsible="icon">
@@ -82,6 +83,16 @@ export function AppSidebar() {
               </NavLink>
             </SidebarMenuButton>
           </SidebarMenuItem>
+          {isAdmin && (
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <NavLink to="/admin" className="hover:bg-sidebar-accent/50" activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium">
+                  <Shield className="mr-2 h-4 w-4" />
+                  {!collapsed && <span>Admin</span>}
+                </NavLink>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          )}
           <SidebarMenuItem>
             <SidebarMenuButton onClick={signOut} className="hover:bg-sidebar-accent/50">
               <LogOut className="mr-2 h-4 w-4" />

@@ -18,6 +18,7 @@ import VitrinePublica from "./pages/VitrinePublica";
 import Configuracoes from "./pages/Configuracoes";
 import Planos from "./pages/Planos";
 import NotFound from "./pages/NotFound";
+import Admin from "./pages/Admin";
 
 const queryClient = new QueryClient();
 
@@ -59,6 +60,7 @@ function AppRoutes() {
         <Route path="/marketing" element={<Marketing />} />
         <Route path="/configuracoes" element={<Configuracoes />} />
         <Route path="/planos" element={<Planos />} />
+        <Route path="/admin" element={<Admin />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AppLayout>
