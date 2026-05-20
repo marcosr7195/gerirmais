@@ -31,6 +31,8 @@ export function AppSidebar() {
   const location = useLocation();
   const { signOut, profile, user } = useAuth();
   const isAdmin = user?.email?.toLowerCase() === "marcos7195@gmail.com";
+
+  return (
     <Sidebar collapsible="icon">
       <SidebarContent>
         <div className={`p-4 ${collapsed ? "px-2" : ""}`}>
@@ -81,6 +83,16 @@ export function AppSidebar() {
               </NavLink>
             </SidebarMenuButton>
           </SidebarMenuItem>
+          {isAdmin && (
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <NavLink to="/admin" className="hover:bg-sidebar-accent/50" activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium">
+                  <Shield className="mr-2 h-4 w-4" />
+                  {!collapsed && <span>Admin</span>}
+                </NavLink>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          )}
           <SidebarMenuItem>
             <SidebarMenuButton onClick={signOut} className="hover:bg-sidebar-accent/50">
               <LogOut className="mr-2 h-4 w-4" />
