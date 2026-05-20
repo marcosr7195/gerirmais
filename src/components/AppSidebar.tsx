@@ -29,9 +29,8 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
-  const { signOut, profile } = useAuth();
-
-  return (
+  const { signOut, profile, user } = useAuth();
+  const isAdmin = user?.email?.toLowerCase() === "marcos7195@gmail.com";
     <Sidebar collapsible="icon">
       <SidebarContent>
         <div className={`p-4 ${collapsed ? "px-2" : ""}`}>
