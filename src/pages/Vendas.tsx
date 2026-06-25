@@ -305,6 +305,28 @@ export default function Vendas() {
     setClientOpen(false); setClientForm(emptyClientForm()); loadClients();
   };
 
+  const saveQuickClient = async () => {
+    if (!quickClient.contact.trim() || !quickClient.company.trim() || !quickClient.phone.trim()) {
+      toast.error("Preencha contato, empresa e telefone");
+      return null;
+    }
+    const { data, error } = await supabase.from("clients").insert({
+      user_id: user!.id,
+      name: quickClient.contact.trim(),
+      trade_name: quickClient.company.trim(),
+      phone: quickClient.phone,
+      person_type: "pj",
+      first_contact_date: new Date().toISOString().slice(0, 10),
+    } as any).select().single();
+    if (error || !data) { toast.error("Erro ao criar cliente"); return null; }
+    await loadClients();
+    setDealForm((p) => ({ ...p, client_id: (data as any).id }));
+    setQuickClient({ contact: "", company: "", phone: "" });
+    setQuickClientOpen(false);
+    toast.success("Cliente criado!");
+    return (data as any).id as string;
+  };
+
   const saveEditClient = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!viewClient) return;
