@@ -213,6 +213,7 @@ export default function Vendas() {
   // --- DEAL LOGIC (unchanged) ---
   const saveDeal = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!dealForm.client_id) { toast.error("Selecione ou cadastre um cliente"); return; }
     const total = isFixedValue ? (parseFloat(dealForm.value) || 0) : dealItems.reduce((a, i) => a + i.quantity * i.unit_price, 0);
     const { data, error } = await supabase.from("deals").insert({
       user_id: user!.id, title: dealForm.title, client_id: dealForm.client_id || null,
