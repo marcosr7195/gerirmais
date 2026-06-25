@@ -125,6 +125,8 @@ export default function Vendas() {
   const [archiveSearch, setArchiveSearch] = useState("");
   const [archivedDealId, setArchivedDealId] = useState<string | null>(null);
   const [archivedDetailsOpen, setArchivedDetailsOpen] = useState(false);
+  const [quickClientOpen, setQuickClientOpen] = useState(false);
+  const [quickClient, setQuickClient] = useState({ contact: "", company: "", phone: "" });
 
   useEffect(() => { if (user) { loadDeals(); loadClients(); loadVitrine(); } }, [user]);
 
@@ -139,11 +141,12 @@ export default function Vendas() {
   };
 
   const loadDeals = async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("deals")
-      .select("*, clients(*), deal_items(*), proposals(id, proposal_number, issue_date, total_value), service_orders(id, title, completed_at, created_at), interactions:client_interactions(id, interaction_type, interaction_date, subject, summary, is_automatic)")
+      .select("*, clients(*), deal_items(*), proposals(id, proposal_number, issue_date, total_value), service_orders(id, title, completed_at, created_at)")
       .eq("user_id", user!.id)
       .order("created_at", { ascending: false });
+    if (error) { console.error("loadDeals error", error); toast.error("Erro ao carregar negócios"); return; }
 
     const dealData = (data || []) as any[];
     const autoArchiveIds = dealData
@@ -210,6 +213,7 @@ export default function Vendas() {
   // --- DEAL LOGIC (unchanged) ---
   const saveDeal = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!dealForm.client_id) { toast.error("Selecione ou cadastre um cliente"); return; }
     const total = isFixedValue ? (parseFloat(dealForm.value) || 0) : dealItems.reduce((a, i) => a + i.quantity * i.unit_price, 0);
     const { data, error } = await supabase.from("deals").insert({
       user_id: user!.id, title: dealForm.title, client_id: dealForm.client_id || null,
@@ -300,6 +304,28 @@ export default function Vendas() {
     if (error) { toast.error("Erro ao salvar"); return; }
     toast.success("Cliente criado!");
     setClientOpen(false); setClientForm(emptyClientForm()); loadClients();
+  };
+
+  const saveQuickClient = async () => {
+    if (!quickClient.contact.trim() || !quickClient.company.trim() || !quickClient.phone.trim()) {
+      toast.error("Preencha contato, empresa e telefone");
+      return null;
+    }
+    const { data, error } = await supabase.from("clients").insert({
+      user_id: user!.id,
+      name: quickClient.contact.trim(),
+      trade_name: quickClient.company.trim(),
+      phone: quickClient.phone,
+      person_type: "pj",
+      first_contact_date: new Date().toISOString().slice(0, 10),
+    } as any).select().single();
+    if (error || !data) { toast.error("Erro ao criar cliente"); return null; }
+    await loadClients();
+    setDealForm((p) => ({ ...p, client_id: (data as any).id }));
+    setQuickClient({ contact: "", company: "", phone: "" });
+    setQuickClientOpen(false);
+    toast.success("Cliente criado!");
+    return (data as any).id as string;
   };
 
   const saveEditClient = async (e: React.FormEvent) => {
@@ -598,11 +624,18 @@ export default function Vendas() {
                 <div className="space-y-2"><Label>Título *</Label><Input value={dealForm.title} onChange={e => setDealForm({ ...dealForm, title: e.target.value })} required /></div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Cliente</Label>
-                    <Select value={dealForm.client_id} onValueChange={v => setDealForm({ ...dealForm, client_id: v })}>
-                      <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                      <SelectContent>{clients.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
-                    </Select>
+                    <div className="flex items-center justify-between">
+                      <Label>Cliente *</Label>
+                      <Button type="button" variant="ghost" size="sm" className="h-6 text-xs" onClick={() => setQuickClientOpen((v) => !v)}>
+                        {quickClientOpen ? "Cancelar" : "+ Novo cliente"}
+                      </Button>
+                    </div>
+                    {!quickClientOpen && (
+                      <Select value={dealForm.client_id} onValueChange={v => setDealForm({ ...dealForm, client_id: v })}>
+                        <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                        <SelectContent>{clients.map(c => <SelectItem key={c.id} value={c.id}>{c.name}{c.trade_name ? ` · ${c.trade_name}` : ""}</SelectItem>)}</SelectContent>
+                      </Select>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label>Etapa</Label>
@@ -612,6 +645,26 @@ export default function Vendas() {
                     </Select>
                   </div>
                 </div>
+                {quickClientOpen && (
+                  <div className="rounded-md border border-dashed p-3 space-y-3 bg-muted/30">
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Cadastro rápido de cliente</p>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <div className="space-y-1">
+                        <Label className="text-xs">Nome do contato *</Label>
+                        <Input value={quickClient.contact} onChange={(e) => setQuickClient({ ...quickClient, contact: e.target.value })} />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Nome da empresa *</Label>
+                        <Input value={quickClient.company} onChange={(e) => setQuickClient({ ...quickClient, company: e.target.value })} />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Telefone *</Label>
+                        <Input value={quickClient.phone} onChange={(e) => setQuickClient({ ...quickClient, phone: phoneMask(e.target.value) })} placeholder="(00) 00000-0000" />
+                      </div>
+                    </div>
+                    <Button type="button" size="sm" onClick={saveQuickClient}>Salvar cliente</Button>
+                  </div>
+                )}
                 <div className="flex items-center gap-3">
                   <Switch checked={isFixedValue} onCheckedChange={setIsFixedValue} />
                   <Label>Valor fixo do contrato</Label>
