@@ -139,11 +139,12 @@ export default function Vendas() {
   };
 
   const loadDeals = async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("deals")
-      .select("*, clients(*), deal_items(*), proposals(id, proposal_number, issue_date, total_value), service_orders(id, title, completed_at, created_at), interactions:client_interactions(id, interaction_type, interaction_date, subject, summary, is_automatic)")
+      .select("*, clients(*), deal_items(*), proposals(id, proposal_number, issue_date, total_value), service_orders(id, title, completed_at, created_at)")
       .eq("user_id", user!.id)
       .order("created_at", { ascending: false });
+    if (error) { console.error("loadDeals error", error); toast.error("Erro ao carregar negócios"); return; }
 
     const dealData = (data || []) as any[];
     const autoArchiveIds = dealData
