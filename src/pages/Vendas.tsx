@@ -645,6 +645,26 @@ export default function Vendas() {
                     </Select>
                   </div>
                 </div>
+                {quickClientOpen && (
+                  <div className="rounded-md border border-dashed p-3 space-y-3 bg-muted/30">
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Cadastro rápido de cliente</p>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <div className="space-y-1">
+                        <Label className="text-xs">Nome do contato *</Label>
+                        <Input value={quickClient.contact} onChange={(e) => setQuickClient({ ...quickClient, contact: e.target.value })} />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Nome da empresa *</Label>
+                        <Input value={quickClient.company} onChange={(e) => setQuickClient({ ...quickClient, company: e.target.value })} />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Telefone *</Label>
+                        <Input value={quickClient.phone} onChange={(e) => setQuickClient({ ...quickClient, phone: phoneMask(e.target.value) })} placeholder="(00) 00000-0000" />
+                      </div>
+                    </div>
+                    <Button type="button" size="sm" onClick={saveQuickClient}>Salvar cliente</Button>
+                  </div>
+                )}
                 <div className="flex items-center gap-3">
                   <Switch checked={isFixedValue} onCheckedChange={setIsFixedValue} />
                   <Label>Valor fixo do contrato</Label>
