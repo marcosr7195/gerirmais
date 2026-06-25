@@ -624,11 +624,18 @@ export default function Vendas() {
                 <div className="space-y-2"><Label>Título *</Label><Input value={dealForm.title} onChange={e => setDealForm({ ...dealForm, title: e.target.value })} required /></div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Cliente</Label>
-                    <Select value={dealForm.client_id} onValueChange={v => setDealForm({ ...dealForm, client_id: v })}>
-                      <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                      <SelectContent>{clients.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
-                    </Select>
+                    <div className="flex items-center justify-between">
+                      <Label>Cliente *</Label>
+                      <Button type="button" variant="ghost" size="sm" className="h-6 text-xs" onClick={() => setQuickClientOpen((v) => !v)}>
+                        {quickClientOpen ? "Cancelar" : "+ Novo cliente"}
+                      </Button>
+                    </div>
+                    {!quickClientOpen && (
+                      <Select value={dealForm.client_id} onValueChange={v => setDealForm({ ...dealForm, client_id: v })}>
+                        <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                        <SelectContent>{clients.map(c => <SelectItem key={c.id} value={c.id}>{c.name}{c.trade_name ? ` · ${c.trade_name}` : ""}</SelectItem>)}</SelectContent>
+                      </Select>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label>Etapa</Label>
