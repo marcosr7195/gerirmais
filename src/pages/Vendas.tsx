@@ -125,6 +125,8 @@ export default function Vendas() {
   const [archiveSearch, setArchiveSearch] = useState("");
   const [archivedDealId, setArchivedDealId] = useState<string | null>(null);
   const [archivedDetailsOpen, setArchivedDetailsOpen] = useState(false);
+  const [quickClientOpen, setQuickClientOpen] = useState(false);
+  const [quickClient, setQuickClient] = useState({ contact: "", company: "", phone: "" });
 
   useEffect(() => { if (user) { loadDeals(); loadClients(); loadVitrine(); } }, [user]);
 
