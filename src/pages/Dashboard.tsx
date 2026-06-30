@@ -147,7 +147,7 @@ export default function Dashboard() {
         .in("status", ["em_andamento", "atrasado"]),
       supabase
         .from("service_orders")
-        .select("id, title, due_date, status")
+        .select("id, title, due_date, status, client_id, clients(name), checklist_items(id, title, due_date, completed)")
         .eq("user_id", user.id)
         .in("status", ["em_andamento", "atrasado"]),
       supabase
