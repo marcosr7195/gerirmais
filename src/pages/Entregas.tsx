@@ -278,7 +278,9 @@ export default function Entregas() {
     void load();
   };
 
-  const archiveOS = async (osId: string) => {
+  const [archiveConfirm, setArchiveConfirm] = useState<{ osId: string; pending: number } | null>(null);
+
+  const doArchive = async (osId: string) => {
     const { error } = await supabase.from("service_orders").update({ status: "arquivado" }).eq("id", osId);
     if (error) {
       toast.error("Erro ao arquivar OS");
@@ -286,6 +288,16 @@ export default function Entregas() {
     }
     toast.success("OS arquivada!");
     void load();
+  };
+
+  const archiveOS = async (osId: string) => {
+    const order = orders.find((o) => o.id === osId);
+    const pending = (order?.checklist || []).filter((c) => !c.completed).length;
+    if (pending > 0) {
+      setArchiveConfirm({ osId, pending });
+      return;
+    }
+    await doArchive(osId);
   };
 
   const completeOS = async (os: ServiceOrder) => {
