@@ -19,6 +19,8 @@ import Configuracoes from "./pages/Configuracoes";
 import Planos from "./pages/Planos";
 import NotFound from "./pages/NotFound";
 import Admin from "./pages/Admin";
+import Termos from "./pages/Termos";
+import Privacidade from "./pages/Privacidade";
 
 const queryClient = new QueryClient();
 
