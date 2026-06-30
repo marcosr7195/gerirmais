@@ -216,6 +216,149 @@ export type Database = {
         }
         Relationships: []
       }
+      credit_card_installments: {
+        Row: {
+          amount: number
+          card_id: string
+          created_at: string
+          id: string
+          installment_number: number
+          installments_total: number
+          invoice_month: string
+          paid_at: string | null
+          purchase_id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          card_id: string
+          created_at?: string
+          id?: string
+          installment_number: number
+          installments_total: number
+          invoice_month: string
+          paid_at?: string | null
+          purchase_id: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          card_id?: string
+          created_at?: string
+          id?: string
+          installment_number?: number
+          installments_total?: number
+          invoice_month?: string
+          paid_at?: string | null
+          purchase_id?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_card_installments_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "credit_cards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_card_installments_purchase_id_fkey"
+            columns: ["purchase_id"]
+            isOneToOne: false
+            referencedRelation: "credit_card_purchases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      credit_card_purchases: {
+        Row: {
+          amount_total: number
+          card_id: string
+          category: string | null
+          created_at: string
+          description: string
+          id: string
+          installments_count: number
+          purchase_date: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount_total: number
+          card_id: string
+          category?: string | null
+          created_at?: string
+          description: string
+          id?: string
+          installments_count?: number
+          purchase_date?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount_total?: number
+          card_id?: string
+          category?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          installments_count?: number
+          purchase_date?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_card_purchases_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "credit_cards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      credit_cards: {
+        Row: {
+          brand: string
+          closing_day: number
+          color: string
+          created_at: string
+          due_day: number
+          id: string
+          limit_total: number
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          brand: string
+          closing_day: number
+          color?: string
+          created_at?: string
+          due_day: number
+          id?: string
+          limit_total?: number
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          brand?: string
+          closing_day?: number
+          color?: string
+          created_at?: string
+          due_day?: number
+          id?: string
+          limit_total?: number
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       deal_items: {
         Row: {
           created_at: string | null
