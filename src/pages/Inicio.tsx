@@ -233,13 +233,8 @@ export default function Inicio() {
                   <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
                     <p.icon className="h-6 w-6" />
                   </div>
-                  <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2">
                     <h3 className="font-semibold">{p.name}</h3>
-                    {p.soon && (
-                      <Badge variant="outline" className="text-xs">
-                        Em breve
-                      </Badge>
-                    )}
                   </div>
                   <p className="text-sm text-muted-foreground leading-relaxed">{p.desc}</p>
                 </CardContent>
