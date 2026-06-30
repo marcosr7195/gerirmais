@@ -241,10 +241,7 @@ export default function Inicio() {
               </Card>
             ))}
           </div>
-          <p className="text-center text-sm text-muted-foreground mt-8 max-w-2xl mx-auto">
-            Módulos <strong>Marketing</strong> e <strong>Valor</strong> chegam em breve — assinantes Pro e Scale terão
-            acesso automático sem custo adicional.
-          </p>
+          {/* note removed: Marketing and Vitrine are now available */}
         </div>
       </section>
 
