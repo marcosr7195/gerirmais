@@ -381,7 +381,21 @@ export default function Dashboard() {
     },
   ];
 
-  const totalPendings = bills.length + pendingOS.length + staleLeads.length;
+  const totalPendings = bills.length + pendingTasksTotal + staleLeads.length;
+
+  const toggleTaskComplete = async (taskId: string) => {
+    const { error } = await supabase
+      .from("checklist_items")
+      .update({ completed: true })
+      .eq("id", taskId);
+    if (error) {
+      toast.error("Não foi possível concluir a tarefa");
+      return;
+    }
+    setPendingTasks((prev) => prev.filter((t) => t.id !== taskId));
+    setPendingTasksTotal((n) => Math.max(0, n - 1));
+    toast.success("Tarefa concluída");
+  };
   const goalReached = goal > 0 && revenueThisMonth >= goal;
 
   return (
