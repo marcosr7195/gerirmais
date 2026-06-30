@@ -170,7 +170,7 @@ export default function FinancasPessoal() {
       payment_method: form.payment_method || null,
       paid_at:
         form.status === "pago" || form.status === "recebido"
-          ? editingTx?.paid_at ?? new Date().toISOString()
+          ? editingTx?.paid_at ?? new Date(form.date + "T12:00:00").toISOString()
           : null,
     };
     if (editingTx) {
@@ -537,7 +537,6 @@ export default function FinancasPessoal() {
                         <p className="text-xs text-muted-foreground">
                           {tx.category} · {new Date(tx.date + "T12:00:00").toLocaleDateString("pt-BR")}
                           {tx.payment_method && ` · ${tx.payment_method}`}
-                          {tx.paid_at && ` · ${tx.type === "receita" ? "Recebido" : "Pago"} em ${new Date(tx.paid_at).toLocaleDateString("pt-BR")}`}
                         </p>
                       </div>
                     </div>

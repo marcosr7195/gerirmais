@@ -149,7 +149,7 @@ export default function Financas() {
       due_date: form.due_date || null,
       paid_at:
         form.status === "pago" || form.status === "recebido"
-          ? editingTx?.paid_at ?? new Date().toISOString()
+          ? editingTx?.paid_at ?? new Date(form.date + "T12:00:00").toISOString()
           : null,
     };
     if (editingTx) {
@@ -545,7 +545,6 @@ export default function Financas() {
                         <p className="text-sm font-medium">{tx.description}</p>
                         <p className="text-xs text-muted-foreground">
                           {tx.category} · {new Date(tx.date + "T12:00:00").toLocaleDateString("pt-BR")}
-                          {tx.paid_at && ` · ${tx.type === "receita" ? "Recebido" : "Pago"} em ${new Date(tx.paid_at).toLocaleDateString("pt-BR")}`}
                         </p>
                       </div>
                     </div>
