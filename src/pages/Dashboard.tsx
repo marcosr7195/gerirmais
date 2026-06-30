@@ -228,30 +228,56 @@ export default function Dashboard() {
     );
 
     // Build pending tasks list from checklists of active OS
+    const openOS = ((osOpenRes.data || []) as any[]);
+    const osIds = openOS.map((o) => o.id);
+    const clientIds = Array.from(
+      new Set(openOS.map((o) => o.client_id).filter(Boolean))
+    ) as string[];
+
+    const [checklistRes, clientsRes] = await Promise.all([
+      osIds.length
+        ? supabase
+            .from("checklist_items")
+            .select("id, title, due_date, completed, service_order_id")
+            .eq("user_id", user.id)
+            .in("service_order_id", osIds)
+            .eq("completed", false)
+        : Promise.resolve({ data: [] as any[] }),
+      clientIds.length
+        ? supabase
+            .from("clients")
+            .select("id, name")
+            .eq("user_id", user.id)
+            .in("id", clientIds)
+        : Promise.resolve({ data: [] as any[] }),
+    ]);
+
+    const clientsMap = new Map<string, string>(
+      ((clientsRes.data || []) as any[]).map((c) => [c.id, c.name])
+    );
+    const osMap = new Map<string, any>(openOS.map((o) => [o.id, o]));
+
     const allTasks: PendingTask[] = [];
-    for (const o of ((osOpenRes.data || []) as any[])) {
-      const clientName = o.clients?.name ?? null;
-      const items = (o.checklist_items || []) as any[];
-      for (const it of items) {
-        if (it.completed) continue;
-        let status: "overdue" | "today" | null = null;
-        if (it.due_date) {
-          if (it.due_date < today) status = "overdue";
-          else if (it.due_date === today) status = "today";
-        } else if (o.status === "atrasado") {
-          status = "overdue";
-        }
-        if (!status) continue;
-        allTasks.push({
-          id: it.id,
-          title: it.title,
-          os_id: o.id,
-          os_title: o.title,
-          client_name: clientName,
-          due_date: it.due_date,
-          status,
-        });
+    for (const it of ((checklistRes.data || []) as any[])) {
+      const o = osMap.get(it.service_order_id);
+      if (!o) continue;
+      let status: "overdue" | "today" | null = null;
+      if (it.due_date) {
+        if (it.due_date < today) status = "overdue";
+        else if (it.due_date === today) status = "today";
+      } else if (o.status === "atrasado") {
+        status = "overdue";
       }
+      if (!status) continue;
+      allTasks.push({
+        id: it.id,
+        title: it.title,
+        os_id: o.id,
+        os_title: o.title,
+        client_name: o.client_id ? clientsMap.get(o.client_id) ?? null : null,
+        due_date: it.due_date,
+        status,
+      });
     }
     allTasks.sort((a, b) => {
       if (a.status !== b.status) return a.status === "overdue" ? -1 : 1;
