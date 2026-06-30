@@ -1,4 +1,4 @@
-import { LayoutDashboard, DollarSign, Handshake, ClipboardList, LogOut, Settings, Store, Megaphone, Shield, Wallet } from "lucide-react";
+import { LayoutDashboard, DollarSign, Handshake, ClipboardList, LogOut, Settings, Store, Megaphone, Shield, Wallet, CreditCard } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -21,6 +21,7 @@ const items = [
   { title: "Vitrine", url: "/vitrine", icon: Store },
   { title: "Finanças", url: "/financas", icon: DollarSign },
   { title: "Finanças Pessoal", url: "/financas-pessoal", icon: Wallet },
+  { title: "Cartões de Crédito", url: "/cartoes", icon: CreditCard },
   { title: "Vendas", url: "/vendas", icon: Handshake },
   { title: "Entregáveis", url: "/entregas", icon: ClipboardList },
   { title: "Marketing", url: "/marketing", icon: Megaphone },
