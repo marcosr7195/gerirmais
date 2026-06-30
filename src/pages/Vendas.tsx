@@ -129,6 +129,13 @@ export default function Vendas() {
   const [quickClient, setQuickClient] = useState({ contact: "", company: "", phone: "" });
 
   useEffect(() => { if (user) { loadDeals(); loadClients(); loadVitrine(); } }, [user]);
+  useEffect(() => {
+    const sp = new URLSearchParams(window.location.search);
+    if (sp.get("new") === "1") {
+      setDealOpen(true);
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, []);
 
   const loadVitrine = async () => {
     const { data } = await supabase

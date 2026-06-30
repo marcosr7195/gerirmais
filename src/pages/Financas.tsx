@@ -91,6 +91,13 @@ export default function Financas() {
   const [deletingTx, setDeletingTx] = useState<Transaction | null>(null);
 
   useEffect(() => { if (user) { load(); loadCategories(); } }, [user]);
+  useEffect(() => {
+    const sp = new URLSearchParams(window.location.search);
+    if (sp.get("new") === "1") {
+      setOpen(true);
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, []);
 
   const load = async () => {
     const { data } = await supabase.from("transactions").select("*").eq("user_id", user!.id).order("date", { ascending: false });

@@ -81,6 +81,14 @@ export default function Vitrine() {
   }, [user]);
 
   useEffect(() => {
+    const sp = new URLSearchParams(window.location.search);
+    if (sp.get("new") === "1") {
+      setOpen(true);
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, []);
+
+  useEffect(() => {
     // Backfill slug on profile if missing
     if (user && profile && !profile.slug && profile.business_name) {
       const newSlug = slugify(profile.business_name);

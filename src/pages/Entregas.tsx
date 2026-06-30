@@ -81,6 +81,13 @@ export default function Entregas() {
       void Promise.all([load(), loadClients()]);
     }
   }, [user]);
+  useEffect(() => {
+    const sp = new URLSearchParams(window.location.search);
+    if (sp.get("new") === "1") {
+      setOpen(true);
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, []);
 
   const load = async () => {
     if (!user) return;
