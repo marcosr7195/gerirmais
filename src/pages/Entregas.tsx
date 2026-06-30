@@ -99,7 +99,24 @@ export default function Entregas() {
       .order("created_at", { ascending: false });
 
     const osData = (data || []) as ServiceOrder[];
-    const staleCompletedIds = osData.filter((order) => order.status === "concluido" && isOlderThanAutoArchive(order.completed_at)).map((order) => order.id);
+
+    const ids = osData.map((order) => order.id);
+    let checklistData: ChecklistItem[] = [];
+
+    if (ids.length > 0) {
+      const { data: checklist } = await supabase.from("checklist_items").select("*").in("service_order_id", ids);
+      checklistData = (checklist || []) as ChecklistItem[];
+    }
+
+    // Auto-archive: only OS concluídas há >24h E sem tarefas pendentes no checklist
+    const staleCompletedIds = osData
+      .filter((order) => {
+        if (order.status !== "concluido") return false;
+        if (!isOlderThanAutoArchive(order.completed_at)) return false;
+        const pending = checklistData.filter((c) => c.service_order_id === order.id && !c.completed).length;
+        return pending === 0;
+      })
+      .map((order) => order.id);
 
     if (staleCompletedIds.length > 0) {
       const { error } = await supabase.from("service_orders").update({ status: "arquivado" }).in("id", staleCompletedIds);
@@ -108,14 +125,6 @@ export default function Entregas() {
           if (staleCompletedIds.includes(order.id)) order.status = "arquivado";
         });
       }
-    }
-
-    const ids = osData.map((order) => order.id);
-    let checklistData: ChecklistItem[] = [];
-
-    if (ids.length > 0) {
-      const { data: checklist } = await supabase.from("checklist_items").select("*").in("service_order_id", ids);
-      checklistData = (checklist || []) as ChecklistItem[];
     }
 
     setOrders(
