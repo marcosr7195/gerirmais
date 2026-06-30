@@ -282,7 +282,8 @@ export default function Dashboard() {
         due_date: b.due_date!,
       }))
     );
-    setPendingOS(osPending);
+    setPendingTasks(allTasks.slice(0, 5));
+    setPendingTasksTotal(allTasks.length);
     setStaleLeads(stale);
     setStats({
       balance,
