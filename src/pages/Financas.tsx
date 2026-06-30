@@ -149,7 +149,7 @@ export default function Financas() {
       due_date: form.due_date || null,
       paid_at:
         form.status === "pago" || form.status === "recebido"
-          ? editingTx?.paid_at ?? new Date().toISOString()
+          ? editingTx?.paid_at ?? new Date(form.date + "T12:00:00").toISOString()
           : null,
     };
     if (editingTx) {
