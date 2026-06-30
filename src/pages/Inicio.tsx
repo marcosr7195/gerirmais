@@ -391,16 +391,20 @@ export default function Inicio() {
               <h4 className="font-semibold text-sm">Legal</h4>
               <ul className="space-y-2 text-sm">
                 <li>
-                  <span className="text-muted-foreground inline-flex items-center gap-2">
+                  <a
+                    href="/termos"
+                    className="text-muted-foreground hover:text-foreground"
+                  >
                     Termos de Uso
-                    <Badge variant="outline" className="text-[10px]">Em breve</Badge>
-                  </span>
+                  </a>
                 </li>
                 <li>
-                  <span className="text-muted-foreground inline-flex items-center gap-2">
+                  <a
+                    href="/privacidade"
+                    className="text-muted-foreground hover:text-foreground"
+                  >
                     Política de Privacidade
-                    <Badge variant="outline" className="text-[10px]">Em breve</Badge>
-                  </span>
+                  </a>
                 </li>
               </ul>
             </div>

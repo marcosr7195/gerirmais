@@ -19,6 +19,8 @@ import Configuracoes from "./pages/Configuracoes";
 import Planos from "./pages/Planos";
 import NotFound from "./pages/NotFound";
 import Admin from "./pages/Admin";
+import Termos from "./pages/Termos";
+import Privacidade from "./pages/Privacidade";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +40,8 @@ function AppRoutes() {
       <Routes>
         <Route path="/" element={<Inicio />} />
         <Route path="/inicio" element={<Inicio />} />
+        <Route path="/termos" element={<Termos />} />
+        <Route path="/privacidade" element={<Privacidade />} />
         <Route path="/vitrine/:slug" element={<VitrinePublica />} />
         <Route path="/auth" element={<Auth />} />
         <Route path="*" element={<Auth />} />
@@ -61,6 +65,8 @@ function AppRoutes() {
         <Route path="/configuracoes" element={<Configuracoes />} />
         <Route path="/planos" element={<Planos />} />
         <Route path="/admin" element={<Admin />} />
+        <Route path="/termos" element={<Termos />} />
+        <Route path="/privacidade" element={<Privacidade />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AppLayout>
