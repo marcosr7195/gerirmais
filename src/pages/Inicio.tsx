@@ -31,8 +31,8 @@ const PROBLEMAS = [
 ];
 
 const PILARES = [
-  { icon: DollarSign, name: "Vitrine", desc: "Mostre seus serviços e produtos para os clientes.", soon: true },
-  { icon: Megaphone, name: "Marketing", desc: "Atraia clientes com campanhas e canais integrados.", soon: true },
+  { icon: DollarSign, name: "Vitrine", desc: "Cadastre seus serviços e produtos com fotos e preços. Gere uma página pública para compartilhar com seus clientes." },
+  { icon: Megaphone, name: "Marketing", desc: "Funis de vendas prontos, copies para WhatsApp e redes sociais, e painel de origem dos seus leads." },
   { icon: TrendingUp, name: "Vendas", desc: "Kanban, propostas e histórico de cada cliente." },
   { icon: ClipboardList, name: "Entregáveis", desc: "Operação e execução dos serviços contratados." },
   { icon: Wallet, name: "Finanças", desc: "Receitas, despesas e fluxo de caixa em um só lugar." },
