@@ -97,7 +97,8 @@ export default function Dashboard() {
   });
   const [revenueThisMonth, setRevenueThisMonth] = useState(0);
   const [bills, setBills] = useState<PendingBill[]>([]);
-  const [pendingOS, setPendingOS] = useState<PendingOS[]>([]);
+  const [pendingTasks, setPendingTasks] = useState<PendingTask[]>([]);
+  const [pendingTasksTotal, setPendingTasksTotal] = useState(0);
   const [staleLeads, setStaleLeads] = useState<StaleLead[]>([]);
 
   const [goal, setGoal] = useState<number>(0);
