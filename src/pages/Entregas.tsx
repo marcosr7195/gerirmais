@@ -99,7 +99,24 @@ export default function Entregas() {
       .order("created_at", { ascending: false });
 
     const osData = (data || []) as ServiceOrder[];
-    const staleCompletedIds = osData.filter((order) => order.status === "concluido" && isOlderThanAutoArchive(order.completed_at)).map((order) => order.id);
+
+    const ids = osData.map((order) => order.id);
+    let checklistData: ChecklistItem[] = [];
+
+    if (ids.length > 0) {
+      const { data: checklist } = await supabase.from("checklist_items").select("*").in("service_order_id", ids);
+      checklistData = (checklist || []) as ChecklistItem[];
+    }
+
+    // Auto-archive: only OS concluídas há >24h E sem tarefas pendentes no checklist
+    const staleCompletedIds = osData
+      .filter((order) => {
+        if (order.status !== "concluido") return false;
+        if (!isOlderThanAutoArchive(order.completed_at)) return false;
+        const pending = checklistData.filter((c) => c.service_order_id === order.id && !c.completed).length;
+        return pending === 0;
+      })
+      .map((order) => order.id);
 
     if (staleCompletedIds.length > 0) {
       const { error } = await supabase.from("service_orders").update({ status: "arquivado" }).in("id", staleCompletedIds);
@@ -108,14 +125,6 @@ export default function Entregas() {
           if (staleCompletedIds.includes(order.id)) order.status = "arquivado";
         });
       }
-    }
-
-    const ids = osData.map((order) => order.id);
-    let checklistData: ChecklistItem[] = [];
-
-    if (ids.length > 0) {
-      const { data: checklist } = await supabase.from("checklist_items").select("*").in("service_order_id", ids);
-      checklistData = (checklist || []) as ChecklistItem[];
     }
 
     setOrders(
@@ -269,7 +278,9 @@ export default function Entregas() {
     void load();
   };
 
-  const archiveOS = async (osId: string) => {
+  const [archiveConfirm, setArchiveConfirm] = useState<{ osId: string; pending: number } | null>(null);
+
+  const doArchive = async (osId: string) => {
     const { error } = await supabase.from("service_orders").update({ status: "arquivado" }).eq("id", osId);
     if (error) {
       toast.error("Erro ao arquivar OS");
@@ -277,6 +288,16 @@ export default function Entregas() {
     }
     toast.success("OS arquivada!");
     void load();
+  };
+
+  const archiveOS = async (osId: string) => {
+    const order = orders.find((o) => o.id === osId);
+    const pending = (order?.checklist || []).filter((c) => !c.completed).length;
+    if (pending > 0) {
+      setArchiveConfirm({ osId, pending });
+      return;
+    }
+    await doArchive(osId);
   };
 
   const completeOS = async (os: ServiceOrder) => {
@@ -457,6 +478,33 @@ export default function Entregas() {
       </Dialog>
 
       <ArchivedOrderDetailsDialog open={detailsOpen} order={detailsOrder} onOpenChange={setDetailsOpen} />
+
+      <AlertDialog open={!!archiveConfirm} onOpenChange={(o) => !o && setArchiveConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Arquivar OS com tarefas pendentes?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {archiveConfirm
+                ? `Esta OS ainda tem ${archiveConfirm.pending} tarefa(s) pendente(s). Tem certeza que deseja arquivar mesmo assim?`
+                : ""}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                if (archiveConfirm) {
+                  const id = archiveConfirm.osId;
+                  setArchiveConfirm(null);
+                  await doArchive(id);
+                }
+              }}
+            >
+              Arquivar mesmo assim
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Tabs defaultValue="ativas" className="space-y-4">
         <TabsList>
