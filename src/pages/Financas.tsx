@@ -545,7 +545,6 @@ export default function Financas() {
                         <p className="text-sm font-medium">{tx.description}</p>
                         <p className="text-xs text-muted-foreground">
                           {tx.category} · {new Date(tx.date + "T12:00:00").toLocaleDateString("pt-BR")}
-                          {tx.paid_at && ` · ${tx.type === "receita" ? "Recebido" : "Pago"} em ${new Date(tx.paid_at).toLocaleDateString("pt-BR")}`}
                         </p>
                       </div>
                     </div>
