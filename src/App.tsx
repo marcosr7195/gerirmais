@@ -11,6 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import Inicio from "./pages/Inicio";
 import Financas from "./pages/Financas";
 import FinancasPessoal from "./pages/FinancasPessoal";
+import CartoesCredito from "./pages/CartoesCredito";
 import Vendas from "./pages/Vendas";
 import Entregas from "./pages/Entregas";
 import Vitrine from "./pages/Vitrine";
