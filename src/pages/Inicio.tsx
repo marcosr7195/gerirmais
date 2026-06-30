@@ -241,7 +241,6 @@ export default function Inicio() {
               </Card>
             ))}
           </div>
-          {/* note removed: Marketing and Vitrine are now available */}
         </div>
       </section>
 
