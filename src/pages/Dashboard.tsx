@@ -139,12 +139,12 @@ export default function Dashboard() {
         .select("id")
         .eq("user_id", user.id)
         .eq("due_date", today)
-        .neq("status", "concluida"),
+        .in("status", ["em_andamento", "atrasado"]),
       supabase
         .from("service_orders")
         .select("id, title, due_date, status")
         .eq("user_id", user.id)
-        .neq("status", "concluida"),
+        .in("status", ["em_andamento", "atrasado"]),
       supabase
         .from("deals")
         .select("id, title, stage, updated_at, archived_at")
