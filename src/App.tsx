@@ -10,6 +10,7 @@ import Onboarding from "./pages/Onboarding";
 import Dashboard from "./pages/Dashboard";
 import Inicio from "./pages/Inicio";
 import Financas from "./pages/Financas";
+import FinancasPessoal from "./pages/FinancasPessoal";
 import Vendas from "./pages/Vendas";
 import Entregas from "./pages/Entregas";
 import Vitrine from "./pages/Vitrine";
@@ -58,6 +59,7 @@ function AppRoutes() {
         <Route path="/" element={<Dashboard />} />
         <Route path="/auth" element={<Navigate to="/" replace />} />
         <Route path="/financas" element={<Financas />} />
+        <Route path="/financas-pessoal" element={<FinancasPessoal />} />
         <Route path="/vendas" element={<Vendas />} />
         <Route path="/entregas" element={<Entregas />} />
         <Route path="/vitrine" element={<Vitrine />} />
