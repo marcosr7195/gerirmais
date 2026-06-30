@@ -227,16 +227,38 @@ export default function Dashboard() {
       0
     );
 
-    // Pending OS: due today or overdue (not concluida)
-    const osPending: PendingOS[] = ((osOpenRes.data || []) as any[])
-      .filter((o) => o.due_date && o.due_date <= today)
-      .map((o) => ({
-        id: o.id,
-        title: o.title,
-        due_date: o.due_date,
-        overdue: o.due_date < today,
-      }))
-      .sort((a, b) => a.due_date.localeCompare(b.due_date));
+    // Build pending tasks list from checklists of active OS
+    const allTasks: PendingTask[] = [];
+    for (const o of ((osOpenRes.data || []) as any[])) {
+      const clientName = o.clients?.name ?? null;
+      const items = (o.checklist_items || []) as any[];
+      for (const it of items) {
+        if (it.completed) continue;
+        let status: "overdue" | "today" | null = null;
+        if (it.due_date) {
+          if (it.due_date < today) status = "overdue";
+          else if (it.due_date === today) status = "today";
+        } else if (o.status === "atrasado") {
+          status = "overdue";
+        }
+        if (!status) continue;
+        allTasks.push({
+          id: it.id,
+          title: it.title,
+          os_id: o.id,
+          os_title: o.title,
+          client_name: clientName,
+          due_date: it.due_date,
+          status,
+        });
+      }
+    }
+    allTasks.sort((a, b) => {
+      if (a.status !== b.status) return a.status === "overdue" ? -1 : 1;
+      const ad = a.due_date || "9999-12-31";
+      const bd = b.due_date || "9999-12-31";
+      return ad.localeCompare(bd);
+    });
 
     // Stale leads: not archived, updated_at older than 5 days
     const stale: StaleLead[] = ((dealsRes.data || []) as any[])
