@@ -21,6 +21,7 @@ const items = [
   { title: "Vitrine", url: "/vitrine", icon: Store },
   { title: "Finanças", url: "/financas", icon: DollarSign },
   { title: "Finanças Pessoal", url: "/financas-pessoal", icon: Wallet },
+  { title: "Cartões de Crédito", url: "/cartoes", icon: CreditCard },
   { title: "Vendas", url: "/vendas", icon: Handshake },
   { title: "Entregáveis", url: "/entregas", icon: ClipboardList },
   { title: "Marketing", url: "/marketing", icon: Megaphone },
