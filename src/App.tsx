@@ -10,6 +10,7 @@ import Onboarding from "./pages/Onboarding";
 import Dashboard from "./pages/Dashboard";
 import Inicio from "./pages/Inicio";
 import Financas from "./pages/Financas";
+import FinancasPessoal from "./pages/FinancasPessoal";
 import Vendas from "./pages/Vendas";
 import Entregas from "./pages/Entregas";
 import Vitrine from "./pages/Vitrine";
