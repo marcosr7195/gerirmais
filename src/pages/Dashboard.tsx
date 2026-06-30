@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import {
   DollarSign,
@@ -47,11 +48,14 @@ interface PendingBill {
   due_date: string;
 }
 
-interface PendingOS {
+interface PendingTask {
   id: string;
   title: string;
-  due_date: string;
-  overdue: boolean;
+  os_id: string;
+  os_title: string;
+  client_name: string | null;
+  due_date: string | null;
+  status: "overdue" | "today";
 }
 
 interface StaleLead {
@@ -93,7 +97,8 @@ export default function Dashboard() {
   });
   const [revenueThisMonth, setRevenueThisMonth] = useState(0);
   const [bills, setBills] = useState<PendingBill[]>([]);
-  const [pendingOS, setPendingOS] = useState<PendingOS[]>([]);
+  const [pendingTasks, setPendingTasks] = useState<PendingTask[]>([]);
+  const [pendingTasksTotal, setPendingTasksTotal] = useState(0);
   const [staleLeads, setStaleLeads] = useState<StaleLead[]>([]);
 
   const [goal, setGoal] = useState<number>(0);
@@ -142,7 +147,7 @@ export default function Dashboard() {
         .in("status", ["em_andamento", "atrasado"]),
       supabase
         .from("service_orders")
-        .select("id, title, due_date, status")
+        .select("id, title, due_date, status, client_id")
         .eq("user_id", user.id)
         .in("status", ["em_andamento", "atrasado"]),
       supabase
@@ -222,16 +227,64 @@ export default function Dashboard() {
       0
     );
 
-    // Pending OS: due today or overdue (not concluida)
-    const osPending: PendingOS[] = ((osOpenRes.data || []) as any[])
-      .filter((o) => o.due_date && o.due_date <= today)
-      .map((o) => ({
-        id: o.id,
-        title: o.title,
-        due_date: o.due_date,
-        overdue: o.due_date < today,
-      }))
-      .sort((a, b) => a.due_date.localeCompare(b.due_date));
+    // Build pending tasks list from checklists of active OS
+    const openOS = ((osOpenRes.data || []) as any[]);
+    const osIds = openOS.map((o) => o.id);
+    const clientIds = Array.from(
+      new Set(openOS.map((o) => o.client_id).filter(Boolean))
+    ) as string[];
+
+    const [checklistRes, clientsRes] = await Promise.all([
+      osIds.length
+        ? supabase
+            .from("checklist_items")
+            .select("id, title, due_date, completed, service_order_id")
+            .eq("user_id", user.id)
+            .in("service_order_id", osIds)
+            .eq("completed", false)
+        : Promise.resolve({ data: [] as any[] }),
+      clientIds.length
+        ? supabase
+            .from("clients")
+            .select("id, name")
+            .eq("user_id", user.id)
+            .in("id", clientIds)
+        : Promise.resolve({ data: [] as any[] }),
+    ]);
+
+    const clientsMap = new Map<string, string>(
+      ((clientsRes.data || []) as any[]).map((c) => [c.id, c.name])
+    );
+    const osMap = new Map<string, any>(openOS.map((o) => [o.id, o]));
+
+    const allTasks: PendingTask[] = [];
+    for (const it of ((checklistRes.data || []) as any[])) {
+      const o = osMap.get(it.service_order_id);
+      if (!o) continue;
+      let status: "overdue" | "today" | null = null;
+      if (it.due_date) {
+        if (it.due_date < today) status = "overdue";
+        else if (it.due_date === today) status = "today";
+      } else if (o.status === "atrasado") {
+        status = "overdue";
+      }
+      if (!status) continue;
+      allTasks.push({
+        id: it.id,
+        title: it.title,
+        os_id: o.id,
+        os_title: o.title,
+        client_name: o.client_id ? clientsMap.get(o.client_id) ?? null : null,
+        due_date: it.due_date,
+        status,
+      });
+    }
+    allTasks.sort((a, b) => {
+      if (a.status !== b.status) return a.status === "overdue" ? -1 : 1;
+      const ad = a.due_date || "9999-12-31";
+      const bd = b.due_date || "9999-12-31";
+      return ad.localeCompare(bd);
+    });
 
     // Stale leads: not archived, updated_at older than 5 days
     const stale: StaleLead[] = ((dealsRes.data || []) as any[])
@@ -255,7 +308,8 @@ export default function Dashboard() {
         due_date: b.due_date!,
       }))
     );
-    setPendingOS(osPending);
+    setPendingTasks(allTasks.slice(0, 5));
+    setPendingTasksTotal(allTasks.length);
     setStaleLeads(stale);
     setStats({
       balance,
@@ -353,7 +407,21 @@ export default function Dashboard() {
     },
   ];
 
-  const totalPendings = bills.length + pendingOS.length + staleLeads.length;
+  const totalPendings = bills.length + pendingTasksTotal + staleLeads.length;
+
+  const toggleTaskComplete = async (taskId: string) => {
+    const { error } = await supabase
+      .from("checklist_items")
+      .update({ completed: true })
+      .eq("id", taskId);
+    if (error) {
+      toast.error("Não foi possível concluir a tarefa");
+      return;
+    }
+    setPendingTasks((prev) => prev.filter((t) => t.id !== taskId));
+    setPendingTasksTotal((n) => Math.max(0, n - 1));
+    toast.success("Tarefa concluída");
+  };
   const goalReached = goal > 0 && revenueThisMonth >= goal;
 
   return (
@@ -577,32 +645,58 @@ export default function Dashboard() {
               </div>
             )}
 
-            {pendingOS.length > 0 && (
+            {pendingTasks.length > 0 && (
               <div>
-                <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">
-                  OS vencendo / atrasadas
-                </p>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                    Tarefas vencendo / atrasadas
+                  </p>
+                  {pendingTasksTotal > pendingTasks.length && (
+                    <Link
+                      to="/entregas"
+                      className="text-xs text-primary hover:underline"
+                    >
+                      Ver todas ({pendingTasksTotal})
+                    </Link>
+                  )}
+                </div>
                 <ul className="space-y-1.5">
-                  {pendingOS.map((o) => (
-                    <li key={o.id}>
+                  {pendingTasks.map((t) => (
+                    <li
+                      key={t.id}
+                      className="flex items-start gap-2 text-sm p-2 -mx-2 rounded hover:bg-muted/50 transition"
+                    >
+                      <Checkbox
+                        className="mt-0.5"
+                        onCheckedChange={(v) => {
+                          if (v) void toggleTaskComplete(t.id);
+                        }}
+                        aria-label="Concluir tarefa"
+                      />
                       <Link
-                        to="/entregas"
-                        className="flex items-start justify-between gap-2 text-sm p-2 -mx-2 rounded hover:bg-muted/50 transition"
+                        to={`/entregas?os=${t.os_id}`}
+                        className="flex-1 min-w-0 flex items-start justify-between gap-2"
                       >
-                        <span className="truncate flex items-center gap-1.5">
-                          {o.overdue && (
-                            <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0" />
-                          )}
-                          {o.title}
+                        <span className="min-w-0">
+                          <span className="flex items-center gap-1.5 font-medium truncate">
+                            {t.status === "overdue" && (
+                              <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0" />
+                            )}
+                            <span className="truncate">{t.title}</span>
+                          </span>
+                          <span className="block text-xs text-muted-foreground truncate">
+                            OS: {t.os_title}
+                            {t.client_name ? ` — Cliente: ${t.client_name}` : ""}
+                          </span>
                         </span>
                         <span
-                          className={`text-xs whitespace-nowrap ${
-                            o.overdue
-                              ? "text-destructive font-medium"
-                              : "text-muted-foreground"
+                          className={`text-[10px] font-semibold uppercase tracking-wide whitespace-nowrap px-2 py-0.5 rounded-full ${
+                            t.status === "overdue"
+                              ? "bg-destructive/15 text-destructive"
+                              : "bg-warning/15 text-warning"
                           }`}
                         >
-                          {o.overdue ? "Atrasada" : "Hoje"}
+                          {t.status === "overdue" ? "Atrasada" : "Hoje"}
                         </span>
                       </Link>
                     </li>
