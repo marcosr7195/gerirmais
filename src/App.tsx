@@ -40,6 +40,8 @@ function AppRoutes() {
       <Routes>
         <Route path="/" element={<Inicio />} />
         <Route path="/inicio" element={<Inicio />} />
+        <Route path="/termos" element={<Termos />} />
+        <Route path="/privacidade" element={<Privacidade />} />
         <Route path="/vitrine/:slug" element={<VitrinePublica />} />
         <Route path="/auth" element={<Auth />} />
         <Route path="*" element={<Auth />} />
