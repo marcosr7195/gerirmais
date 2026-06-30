@@ -31,8 +31,8 @@ const PROBLEMAS = [
 ];
 
 const PILARES = [
-  { icon: DollarSign, name: "Vitrine", desc: "Mostre seus serviços e produtos para os clientes.", soon: true },
-  { icon: Megaphone, name: "Marketing", desc: "Atraia clientes com campanhas e canais integrados.", soon: true },
+  { icon: DollarSign, name: "Vitrine", desc: "Cadastre seus serviços e produtos com fotos e preços. Gere uma página pública para compartilhar com seus clientes." },
+  { icon: Megaphone, name: "Marketing", desc: "Funis de vendas prontos, copies para WhatsApp e redes sociais, e painel de origem dos seus leads." },
   { icon: TrendingUp, name: "Vendas", desc: "Kanban, propostas e histórico de cada cliente." },
   { icon: ClipboardList, name: "Entregáveis", desc: "Operação e execução dos serviços contratados." },
   { icon: Wallet, name: "Finanças", desc: "Receitas, despesas e fluxo de caixa em um só lugar." },
@@ -235,21 +235,12 @@ export default function Inicio() {
                   </div>
                   <div className="flex items-center gap-2">
                     <h3 className="font-semibold">{p.name}</h3>
-                    {p.soon && (
-                      <Badge variant="outline" className="text-xs">
-                        Em breve
-                      </Badge>
-                    )}
                   </div>
                   <p className="text-sm text-muted-foreground leading-relaxed">{p.desc}</p>
                 </CardContent>
               </Card>
             ))}
           </div>
-          <p className="text-center text-sm text-muted-foreground mt-8 max-w-2xl mx-auto">
-            Módulos <strong>Marketing</strong> e <strong>Valor</strong> chegam em breve — assinantes Pro e Scale terão
-            acesso automático sem custo adicional.
-          </p>
         </div>
       </section>
 
