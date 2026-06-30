@@ -61,6 +61,7 @@ function AppRoutes() {
         <Route path="/auth" element={<Navigate to="/" replace />} />
         <Route path="/financas" element={<Financas />} />
         <Route path="/financas-pessoal" element={<FinancasPessoal />} />
+        <Route path="/cartoes" element={<CartoesCredito />} />
         <Route path="/vendas" element={<Vendas />} />
         <Route path="/entregas" element={<Entregas />} />
         <Route path="/vitrine" element={<Vitrine />} />
