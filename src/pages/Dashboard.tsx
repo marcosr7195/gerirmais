@@ -48,11 +48,14 @@ interface PendingBill {
   due_date: string;
 }
 
-interface PendingOS {
+interface PendingTask {
   id: string;
   title: string;
-  due_date: string;
-  overdue: boolean;
+  os_id: string;
+  os_title: string;
+  client_name: string | null;
+  due_date: string | null;
+  status: "overdue" | "today";
 }
 
 interface StaleLead {
