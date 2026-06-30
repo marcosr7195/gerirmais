@@ -619,32 +619,58 @@ export default function Dashboard() {
               </div>
             )}
 
-            {pendingOS.length > 0 && (
+            {pendingTasks.length > 0 && (
               <div>
-                <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">
-                  OS vencendo / atrasadas
-                </p>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                    Tarefas vencendo / atrasadas
+                  </p>
+                  {pendingTasksTotal > pendingTasks.length && (
+                    <Link
+                      to="/entregas"
+                      className="text-xs text-primary hover:underline"
+                    >
+                      Ver todas ({pendingTasksTotal})
+                    </Link>
+                  )}
+                </div>
                 <ul className="space-y-1.5">
-                  {pendingOS.map((o) => (
-                    <li key={o.id}>
+                  {pendingTasks.map((t) => (
+                    <li
+                      key={t.id}
+                      className="flex items-start gap-2 text-sm p-2 -mx-2 rounded hover:bg-muted/50 transition"
+                    >
+                      <Checkbox
+                        className="mt-0.5"
+                        onCheckedChange={(v) => {
+                          if (v) void toggleTaskComplete(t.id);
+                        }}
+                        aria-label="Concluir tarefa"
+                      />
                       <Link
-                        to="/entregas"
-                        className="flex items-start justify-between gap-2 text-sm p-2 -mx-2 rounded hover:bg-muted/50 transition"
+                        to={`/entregas?os=${t.os_id}`}
+                        className="flex-1 min-w-0 flex items-start justify-between gap-2"
                       >
-                        <span className="truncate flex items-center gap-1.5">
-                          {o.overdue && (
-                            <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0" />
-                          )}
-                          {o.title}
+                        <span className="min-w-0">
+                          <span className="flex items-center gap-1.5 font-medium truncate">
+                            {t.status === "overdue" && (
+                              <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0" />
+                            )}
+                            <span className="truncate">{t.title}</span>
+                          </span>
+                          <span className="block text-xs text-muted-foreground truncate">
+                            OS: {t.os_title}
+                            {t.client_name ? ` — Cliente: ${t.client_name}` : ""}
+                          </span>
                         </span>
                         <span
-                          className={`text-xs whitespace-nowrap ${
-                            o.overdue
-                              ? "text-destructive font-medium"
-                              : "text-muted-foreground"
+                          className={`text-[10px] font-semibold uppercase tracking-wide whitespace-nowrap px-2 py-0.5 rounded-full ${
+                            t.status === "overdue"
+                              ? "bg-destructive/15 text-destructive"
+                              : "bg-warning/15 text-warning"
                           }`}
                         >
-                          {o.overdue ? "Atrasada" : "Hoje"}
+                          {t.status === "overdue" ? "Atrasada" : "Hoje"}
                         </span>
                       </Link>
                     </li>
