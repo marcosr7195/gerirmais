@@ -479,6 +479,33 @@ export default function Entregas() {
 
       <ArchivedOrderDetailsDialog open={detailsOpen} order={detailsOrder} onOpenChange={setDetailsOpen} />
 
+      <AlertDialog open={!!archiveConfirm} onOpenChange={(o) => !o && setArchiveConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Arquivar OS com tarefas pendentes?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {archiveConfirm
+                ? `Esta OS ainda tem ${archiveConfirm.pending} tarefa(s) pendente(s). Tem certeza que deseja arquivar mesmo assim?`
+                : ""}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                if (archiveConfirm) {
+                  const id = archiveConfirm.osId;
+                  setArchiveConfirm(null);
+                  await doArchive(id);
+                }
+              }}
+            >
+              Arquivar mesmo assim
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <Tabs defaultValue="ativas" className="space-y-4">
         <TabsList>
           <TabsTrigger value="ativas">Ativas</TabsTrigger>
