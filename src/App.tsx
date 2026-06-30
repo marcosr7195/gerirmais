@@ -65,6 +65,8 @@ function AppRoutes() {
         <Route path="/configuracoes" element={<Configuracoes />} />
         <Route path="/planos" element={<Planos />} />
         <Route path="/admin" element={<Admin />} />
+        <Route path="/termos" element={<Termos />} />
+        <Route path="/privacidade" element={<Privacidade />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AppLayout>
