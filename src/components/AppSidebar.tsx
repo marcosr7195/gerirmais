@@ -20,6 +20,7 @@ const items = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Vitrine", url: "/vitrine", icon: Store },
   { title: "Finanças", url: "/financas", icon: DollarSign },
+  { title: "Finanças Pessoal", url: "/financas-pessoal", icon: Wallet },
   { title: "Vendas", url: "/vendas", icon: Handshake },
   { title: "Entregáveis", url: "/entregas", icon: ClipboardList },
   { title: "Marketing", url: "/marketing", icon: Megaphone },
