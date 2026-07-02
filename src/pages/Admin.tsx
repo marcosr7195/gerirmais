@@ -180,6 +180,9 @@ export default function Admin() {
           <Button variant="outline" onClick={load} disabled={loading}>
             <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} /> Atualizar
           </Button>
+          <Button variant="outline" onClick={previewCleanup} disabled={cleanupLoading}>
+            <Trash2 className="h-4 w-4 mr-2" /> Limpar registros de teste
+          </Button>
           <Dialog open={createOpen} onOpenChange={setCreateOpen}>
             <DialogTrigger asChild>
               <Button><UserPlus className="h-4 w-4 mr-2" /> Cadastrar usuário</Button>
