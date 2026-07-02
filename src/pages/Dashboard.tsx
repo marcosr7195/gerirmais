@@ -331,7 +331,12 @@ export default function Dashboard() {
       balance,
       pendingDeals: proposalsRes.count || 0,
       todayDeliveries: osTodayRes.data?.length || 0,
-      newLeadsThisMonth: newLeadsRes.count || 0,
+      newLeadsThisMonth: ((newLeadsRes.data || []) as any[]).filter((d) => {
+        if (d.stage !== "fechado") return true;
+        // fechado só conta se foi nos últimos 7 dias
+        const ref = d.closed_at ? new Date(d.closed_at).getTime() : 0;
+        return ref && (Date.now() - ref) <= 7 * 86400000;
+      }).length,
       closedDealsThisMonth: archivedDeals.length,
       closedDealsValueThisMonth,
       openServiceOrders: (osOpenRes.data || []).length,
