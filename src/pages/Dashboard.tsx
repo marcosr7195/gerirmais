@@ -186,11 +186,15 @@ export default function Dashboard() {
         .select("id", { count: "exact", head: true })
         .eq("user_id", user.id)
         .eq("status", "ativo"),
+      // Leads ativos criados este mês: exclui arquivados, perdidos e
+      // "fechado" com mais de 7 dias (fechados recentes ainda contam).
       supabase
         .from("deals")
-        .select("id", { count: "exact", head: true })
+        .select("id, stage, closed_at, archived_at")
         .eq("user_id", user.id)
-        .gte("created_at", monthStart),
+        .gte("created_at", monthStart)
+        .is("archived_at", null)
+        .neq("stage", "perdido"),
     ]);
 
     const transactions = txRes.data || [];
