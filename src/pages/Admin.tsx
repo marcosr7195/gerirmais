@@ -131,6 +131,35 @@ export default function Admin() {
     }
   };
 
+  const [cleanupPreview, setCleanupPreview] = useState<any | null>(null);
+  const [cleanupLoading, setCleanupLoading] = useState(false);
+
+  const previewCleanup = async () => {
+    setCleanupLoading(true);
+    try {
+      const res: any = await call("cleanup_test_records", { dry_run: true });
+      setCleanupPreview(res.summary);
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setCleanupLoading(false);
+    }
+  };
+
+  const confirmCleanup = async () => {
+    setCleanupLoading(true);
+    try {
+      const res: any = await call("cleanup_test_records", { confirm: true });
+      const d = res.deleted || {};
+      toast.success(`Removidos: ${d.clients || 0} clientes, ${d.deals || 0} negócios, ${d.service_orders || 0} OS`);
+      setCleanupPreview(null);
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setCleanupLoading(false);
+    }
+  };
+
   const filtered = users.filter((u) =>
     !search ||
     u.email?.toLowerCase().includes(search.toLowerCase()) ||
