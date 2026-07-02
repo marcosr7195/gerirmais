@@ -110,6 +110,18 @@ export default function Dashboard() {
     const raw = localStorage.getItem(goalKey(user.id));
     setGoal(raw ? Number(raw) || 0 : 0);
     void loadAll();
+
+    // Recalcula pendências (status é sempre calculado em tempo real) sempre
+    // que o usuário voltar para a aba/janela — evita dados em cache após
+    // editar a data de uma tarefa em outro módulo.
+    const onFocus = () => { void loadAll(); };
+    const onVisibility = () => { if (document.visibilityState === "visible") void loadAll(); };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
   }, [user]);
 
   const loadAll = async () => {
