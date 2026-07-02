@@ -1,0 +1,1 @@
+UPDATE public.credit_card_installments SET invoice_month = (invoice_month::date - INTERVAL '1 month')::date WHERE status = 'aberta';
