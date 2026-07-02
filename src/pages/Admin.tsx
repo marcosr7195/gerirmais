@@ -319,6 +319,35 @@ export default function Admin() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Cleanup preview / confirm dialog */}
+      <AlertDialog open={!!cleanupPreview} onOpenChange={(o) => !o && setCleanupPreview(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Limpar registros de teste</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2">
+                <p>Serão removidos permanentemente os registros cujo nome contenha "teste", "test", "exemplo", "example", "demo" ou "dummy":</p>
+                <ul className="list-disc pl-5 text-sm">
+                  <li>{cleanupPreview?.clients || 0} cliente(s)</li>
+                  <li>{cleanupPreview?.deals || 0} negócio(s)</li>
+                  <li>{cleanupPreview?.service_orders || 0} ordem(ns) de serviço</li>
+                </ul>
+                {cleanupPreview?.samples?.clients?.length ? (
+                  <p className="text-xs text-muted-foreground">Ex.: {cleanupPreview.samples.clients.slice(0, 5).join(", ")}</p>
+                ) : null}
+                <p className="text-xs text-destructive">Esta ação não pode ser desfeita. Dados reais não são afetados.</p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={cleanupLoading}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmCleanup} disabled={cleanupLoading} className="bg-destructive hover:bg-destructive/90">
+              Confirmar limpeza
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
