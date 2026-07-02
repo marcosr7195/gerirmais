@@ -1,7 +1,9 @@
-import { LayoutDashboard, DollarSign, Handshake, ClipboardList, LogOut, Settings, Store, Megaphone, Shield, Wallet, CreditCard } from "lucide-react";
+import { LayoutDashboard, DollarSign, Handshake, ClipboardList, LogOut, Settings, Store, Megaphone, Shield, Wallet, CreditCard, Briefcase, User } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { cn } from "@/lib/utils";
+import { Separator } from "@/components/ui/separator";
 import logoCompleta from "@/assets/logo-completa.png";
 import iconG from "@/assets/icon-g.png";
 import {
@@ -16,16 +18,78 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 
-const items = [
+const PERSONAL_COLOR = "#8B5CF6";
+
+const businessItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Vitrine", url: "/vitrine", icon: Store },
-  { title: "Finanças", url: "/financas", icon: DollarSign },
-  { title: "Finanças Pessoal", url: "/financas-pessoal", icon: Wallet },
-  { title: "Cartões de Crédito", url: "/cartoes", icon: CreditCard },
+  { title: "Marketing", url: "/marketing", icon: Megaphone },
   { title: "Vendas", url: "/vendas", icon: Handshake },
   { title: "Entregáveis", url: "/entregas", icon: ClipboardList },
-  { title: "Marketing", url: "/marketing", icon: Megaphone },
+  { title: "Finanças", url: "/financas", icon: DollarSign },
 ];
+
+const personalItems = [
+  { title: "Finanças Pessoal", url: "/financas-pessoal", icon: Wallet },
+  { title: "Cartões de Crédito", url: "/cartoes", icon: CreditCard },
+];
+
+interface SidebarSectionHeaderProps {
+  title: string;
+  icon: React.ElementType;
+  isPersonal?: boolean;
+  collapsed?: boolean;
+}
+
+function SidebarSectionHeader({ title, icon: Icon, isPersonal, collapsed }: SidebarSectionHeaderProps) {
+  if (collapsed) {
+    return (
+      <div className="px-4 py-2 flex justify-center">
+        <Icon className={cn("h-3.5 w-3.5", isPersonal ? "text-[#8B5CF6]" : "text-sidebar-foreground/60")} />
+      </div>
+    );
+  }
+
+  return (
+    <div className={cn("px-4 py-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider", isPersonal ? "text-[#8B5CF6]" : "text-sidebar-foreground/60")}>
+      <Icon className="h-3.5 w-3.5" />
+      <span>{title}</span>
+    </div>
+  );
+}
+
+interface SidebarItemProps {
+  item: (typeof businessItems)[number];
+  isPersonal?: boolean;
+  collapsed?: boolean;
+}
+
+function SidebarItem({ item, isPersonal, collapsed }: SidebarItemProps) {
+  const location = useLocation();
+  const isActive = location.pathname === item.url || (item.url !== "/" && location.pathname.startsWith(item.url));
+
+  return (
+    <SidebarMenuItem key={item.title}>
+      <SidebarMenuButton asChild isActive={isActive}>
+        <NavLink
+          to={item.url}
+          end={item.url === "/"}
+          className={cn(
+            "hover:bg-sidebar-accent/50",
+            isPersonal && "text-[#8B5CF6] hover:bg-[#8B5CF6]/10"
+          )}
+          activeClassName={cn(
+            "font-medium",
+            isPersonal ? "bg-[#8B5CF6]/20 text-[#8B5CF6]" : "bg-sidebar-accent text-sidebar-accent-foreground"
+          )}
+        >
+          <item.icon className="mr-2 h-4 w-4" />
+          {!collapsed && <span>{item.title}</span>}
+        </NavLink>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
+  );
+}
 
 export function AppSidebar() {
   const { state } = useSidebar();
@@ -52,20 +116,16 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {items.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink
-                      to={item.url}
-                      end={item.url === "/"}
-                      className="hover:bg-sidebar-accent/50"
-                      activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                    >
-                      <item.icon className="mr-2 h-4 w-4" />
-                      {!collapsed && <span>{item.title}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
+              <SidebarSectionHeader title="Meu Negócio" icon={Briefcase} collapsed={collapsed} />
+              {businessItems.map((item) => (
+                <SidebarItem key={item.title} item={item} collapsed={collapsed} />
+              ))}
+
+              <Separator className="my-3 bg-sidebar-border" />
+
+              <SidebarSectionHeader title="Pessoal" icon={User} isPersonal collapsed={collapsed} />
+              {personalItems.map((item) => (
+                <SidebarItem key={item.title} item={item} isPersonal collapsed={collapsed} />
               ))}
             </SidebarMenu>
           </SidebarGroupContent>
