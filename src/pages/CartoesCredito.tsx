@@ -49,13 +49,11 @@ const monthLabel = (d: Date) => d.toLocaleDateString("pt-BR", { month: "long", y
 
 function computeFirstInvoiceMonth(purchaseDate: string, closingDay: number): Date {
   const [y, m, d] = purchaseDate.split("-").map(Number);
-  const day = d;
-  // Closes day X -> goes to current month's invoice if day <= closingDay; else next month
-  // Then the invoice is due the FOLLOWING month
+  // Purchase on or before closing day -> current month's invoice (due this month).
+  // Purchase after closing day -> next month's invoice (due next month).
   let month = m - 1; // 0-indexed
   let year = y;
-  if (day > closingDay) month += 1;
-  month += 1; // due month
+  if (d > closingDay) month += 1;
   while (month > 11) { month -= 12; year += 1; }
   return new Date(year, month, 1);
 }
