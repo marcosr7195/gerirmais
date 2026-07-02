@@ -170,19 +170,26 @@ export default function Marketing() {
       if (ids.length) {
         const { data: dealsData } = await supabase
           .from("deals")
-          .select("client_id, stage, value, created_at")
+          .select("client_id, stage, value, created_at, archived_at")
           .eq("user_id", user.id)
-          .in("client_id", ids);
+          .in("client_id", ids)
+          .is("archived_at", null)
+          .neq("stage", "perdido");
         deals = dealsData || [];
       }
       const dealByClient = new Map<string, any>();
       deals.forEach((d) => {
         if (!dealByClient.has(d.client_id)) dealByClient.set(d.client_id, d);
       });
-      const mapped: Lead[] = (clientsData || []).map((c) => ({
-        id: c.id, name: c.name, origin: c.origin, created_at: c.created_at,
-        deal: dealByClient.get(c.id) ? { stage: dealByClient.get(c.id).stage, value: dealByClient.get(c.id).value } : null,
-      }));
+      // Considera apenas leads ativos: com um deal ativo no pipeline.
+      // Clientes cujo único deal foi perdido/arquivado (ou sem deal) ficam fora
+      // da análise de leads do marketing.
+      const mapped: Lead[] = (clientsData || [])
+        .filter((c) => dealByClient.has(c.id))
+        .map((c) => ({
+          id: c.id, name: c.name, origin: c.origin, created_at: c.created_at,
+          deal: { stage: dealByClient.get(c.id).stage, value: dealByClient.get(c.id).value },
+        }));
       setLeads(mapped);
     })();
   }, [user]);

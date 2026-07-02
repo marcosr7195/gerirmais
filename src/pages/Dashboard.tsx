@@ -186,11 +186,15 @@ export default function Dashboard() {
         .select("id", { count: "exact", head: true })
         .eq("user_id", user.id)
         .eq("status", "ativo"),
+      // Leads ativos criados este mês: exclui arquivados, perdidos e
+      // "fechado" com mais de 7 dias (fechados recentes ainda contam).
       supabase
         .from("deals")
-        .select("id", { count: "exact", head: true })
+        .select("id, stage, closed_at, archived_at")
         .eq("user_id", user.id)
-        .gte("created_at", monthStart),
+        .gte("created_at", monthStart)
+        .is("archived_at", null)
+        .neq("stage", "perdido"),
     ]);
 
     const transactions = txRes.data || [];
@@ -327,7 +331,12 @@ export default function Dashboard() {
       balance,
       pendingDeals: proposalsRes.count || 0,
       todayDeliveries: osTodayRes.data?.length || 0,
-      newLeadsThisMonth: newLeadsRes.count || 0,
+      newLeadsThisMonth: ((newLeadsRes.data || []) as any[]).filter((d) => {
+        if (d.stage !== "fechado") return true;
+        // fechado só conta se foi nos últimos 7 dias
+        const ref = d.closed_at ? new Date(d.closed_at).getTime() : 0;
+        return ref && (Date.now() - ref) <= 7 * 86400000;
+      }).length,
       closedDealsThisMonth: archivedDeals.length,
       closedDealsValueThisMonth,
       openServiceOrders: (osOpenRes.data || []).length,

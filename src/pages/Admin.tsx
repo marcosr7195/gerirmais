@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Shield, UserPlus, Ban, Pencil, RefreshCw } from "lucide-react";
+import { Shield, UserPlus, Ban, Pencil, RefreshCw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 const ADMIN_EMAIL = "marcos7195@gmail.com";
@@ -131,6 +131,35 @@ export default function Admin() {
     }
   };
 
+  const [cleanupPreview, setCleanupPreview] = useState<any | null>(null);
+  const [cleanupLoading, setCleanupLoading] = useState(false);
+
+  const previewCleanup = async () => {
+    setCleanupLoading(true);
+    try {
+      const res: any = await call("cleanup_test_records", { dry_run: true });
+      setCleanupPreview(res.summary);
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setCleanupLoading(false);
+    }
+  };
+
+  const confirmCleanup = async () => {
+    setCleanupLoading(true);
+    try {
+      const res: any = await call("cleanup_test_records", { confirm: true });
+      const d = res.deleted || {};
+      toast.success(`Removidos: ${d.clients || 0} clientes, ${d.deals || 0} negócios, ${d.service_orders || 0} OS`);
+      setCleanupPreview(null);
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setCleanupLoading(false);
+    }
+  };
+
   const filtered = users.filter((u) =>
     !search ||
     u.email?.toLowerCase().includes(search.toLowerCase()) ||
@@ -150,6 +179,9 @@ export default function Admin() {
         <div className="flex gap-2">
           <Button variant="outline" onClick={load} disabled={loading}>
             <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} /> Atualizar
+          </Button>
+          <Button variant="outline" onClick={previewCleanup} disabled={cleanupLoading}>
+            <Trash2 className="h-4 w-4 mr-2" /> Limpar registros de teste
           </Button>
           <Dialog open={createOpen} onOpenChange={setCreateOpen}>
             <DialogTrigger asChild>
@@ -287,6 +319,35 @@ export default function Admin() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Cleanup preview / confirm dialog */}
+      <AlertDialog open={!!cleanupPreview} onOpenChange={(o) => !o && setCleanupPreview(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Limpar registros de teste</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2">
+                <p>Serão removidos permanentemente os registros cujo nome contenha "teste", "test", "exemplo", "example", "demo" ou "dummy":</p>
+                <ul className="list-disc pl-5 text-sm">
+                  <li>{cleanupPreview?.clients || 0} cliente(s)</li>
+                  <li>{cleanupPreview?.deals || 0} negócio(s)</li>
+                  <li>{cleanupPreview?.service_orders || 0} ordem(ns) de serviço</li>
+                </ul>
+                {cleanupPreview?.samples?.clients?.length ? (
+                  <p className="text-xs text-muted-foreground">Ex.: {cleanupPreview.samples.clients.slice(0, 5).join(", ")}</p>
+                ) : null}
+                <p className="text-xs text-destructive">Esta ação não pode ser desfeita. Dados reais não são afetados.</p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={cleanupLoading}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmCleanup} disabled={cleanupLoading} className="bg-destructive hover:bg-destructive/90">
+              Confirmar limpeza
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

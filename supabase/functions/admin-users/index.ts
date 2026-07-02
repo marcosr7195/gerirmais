@@ -77,6 +77,46 @@ Deno.serve(async (req) => {
       return json({ success: true });
     }
 
+    if (action === "cleanup_test_records") {
+      const dryRun = body.dry_run !== false && !body.confirm;
+      const pattern = "%(teste|test|exemplo|example|demo|dummy)%";
+      // ilike só aceita um pattern; usamos or() com múltiplos ilikes.
+      const nameFilter = "name.ilike.%teste%,name.ilike.%test%,name.ilike.%exemplo%,name.ilike.%example%,name.ilike.%demo%,name.ilike.%dummy%";
+      const titleFilter = "title.ilike.%teste%,title.ilike.%test%,title.ilike.%exemplo%,title.ilike.%example%,title.ilike.%demo%,title.ilike.%dummy%";
+
+      const { data: clients } = await admin.from("clients").select("id, name, user_id").or(nameFilter);
+      const { data: deals } = await admin.from("deals").select("id, title, user_id").or(titleFilter);
+      const { data: orders } = await admin.from("service_orders").select("id, title, user_id").or(titleFilter);
+
+      const summary = {
+        clients: clients?.length || 0,
+        deals: deals?.length || 0,
+        service_orders: orders?.length || 0,
+        samples: {
+          clients: (clients || []).slice(0, 10).map((c: any) => c.name),
+          deals: (deals || []).slice(0, 10).map((d: any) => d.title),
+          service_orders: (orders || []).slice(0, 10).map((o: any) => o.title),
+        },
+      };
+
+      if (dryRun) return json({ dry_run: true, summary });
+
+      const clientIds = (clients || []).map((c: any) => c.id);
+      const dealIds = (deals || []).map((d: any) => d.id);
+      const orderIds = (orders || []).map((o: any) => o.id);
+
+      // Remove filhos primeiro para respeitar FKs.
+      if (dealIds.length) await admin.from("deal_items").delete().in("deal_id", dealIds);
+      if (orderIds.length) await admin.from("checklist_items").delete().in("service_order_id", orderIds);
+      if (clientIds.length) await admin.from("client_interactions").delete().in("client_id", clientIds);
+
+      if (orderIds.length) await admin.from("service_orders").delete().in("id", orderIds);
+      if (dealIds.length) await admin.from("deals").delete().in("id", dealIds);
+      if (clientIds.length) await admin.from("clients").delete().in("id", clientIds);
+
+      return json({ deleted: summary });
+    }
+
     return json({ error: "Ação inválida" }, 400);
   } catch (e) {
     return json({ error: (e as Error).message }, 500);
