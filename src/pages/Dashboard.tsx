@@ -302,9 +302,16 @@ export default function Dashboard() {
       return ad.localeCompare(bd);
     });
 
-    // Stale leads: not archived, updated_at older than 5 days
+    // Stale leads: apenas leads ativos do pipeline (exclui fechados, perdidos e arquivados)
+    // parados há mais de 5 dias
+    const activeStages = ["lead", "negociando"];
     const stale: StaleLead[] = ((dealsRes.data || []) as any[])
-      .filter((d) => d.updated_at && d.updated_at < fiveDaysAgo)
+      .filter(
+        (d) =>
+          activeStages.includes(d.stage) &&
+          d.updated_at &&
+          d.updated_at < fiveDaysAgo
+      )
       .map((d) => {
         const days = Math.floor(
           (now.getTime() - new Date(d.updated_at).getTime()) / 86400000
