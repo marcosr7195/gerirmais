@@ -60,6 +60,47 @@ export default function VitrinePublica() {
   const [items, setItems] = useState<PublicItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [leadItem, setLeadItem] = useState<PublicItem | null>(null);
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [form, setForm] = useState({ name: "", phone: "", email: "", message: "", bestTime: "" });
+
+  const openLead = (item: PublicItem) => {
+    setLeadItem(item);
+    setSent(false);
+    setSending(false);
+    setForm({ name: "", phone: "", email: "", message: "", bestTime: "" });
+  };
+
+  const submitLead = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!leadItem || !slug) return;
+    if (form.name.trim().length < 2) {
+      toast.error("Informe seu nome.");
+      return;
+    }
+    if (onlyDigits(form.phone).length < 10) {
+      toast.error("Informe um WhatsApp válido com DDD.");
+      return;
+    }
+    setSending(true);
+    const { data, error } = await (supabase as any).rpc("create_vitrine_lead", {
+      p_slug: slug,
+      p_item_id: leadItem.id,
+      p_name: form.name.trim(),
+      p_phone: form.phone,
+      p_email: form.email.trim() || null,
+      p_message: form.message.trim() || null,
+      p_best_time: form.bestTime.trim() || null,
+    });
+    setSending(false);
+    if (error || !data?.success) {
+      toast.error(data?.message || "Não foi possível enviar agora. Tente novamente.");
+      return;
+    }
+    setSent(true);
+    toast.success("Recebemos seu interesse!");
+  };
 
   useEffect(() => {
     void load();
