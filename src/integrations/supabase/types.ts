@@ -901,6 +901,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_vitrine_lead: {
+        Args: {
+          p_best_time?: string
+          p_email?: string
+          p_item_id: string
+          p_message?: string
+          p_name: string
+          p_phone: string
+          p_slug: string
+        }
+        Returns: Json
+      }
       get_vitrine_by_slug: { Args: { p_slug: string }; Returns: Json }
     }
     Enums: {
