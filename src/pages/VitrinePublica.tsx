@@ -63,18 +63,20 @@ export default function VitrinePublica() {
   const [leadItem, setLeadItem] = useState<PublicItem | null>(null);
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
+  const [duplicate, setDuplicate] = useState(false);
   const [form, setForm] = useState({ name: "", phone: "", email: "", message: "", bestTime: "" });
 
   const openLead = (item: PublicItem) => {
     setLeadItem(item);
     setSent(false);
+    setDuplicate(false);
     setSending(false);
     setForm({ name: "", phone: "", email: "", message: "", bestTime: "" });
   };
 
   const submitLead = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!leadItem || !slug) return;
+    if (!leadItem || !slug || sending || sent) return;
     if (form.name.trim().length < 2) {
       toast.error("Informe seu nome.");
       return;
@@ -98,8 +100,9 @@ export default function VitrinePublica() {
       toast.error(data?.message || "Não foi possível enviar agora. Tente novamente.");
       return;
     }
+    setDuplicate(!!data?.duplicate);
     setSent(true);
-    toast.success("Recebemos seu interesse!");
+    toast.success(data?.message || "Recebemos seu interesse!");
   };
 
   useEffect(() => {
