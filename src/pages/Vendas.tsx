@@ -46,7 +46,7 @@ const stages = [
   { key: "perdido", label: "Perdido", color: "bg-destructive/10 text-destructive" },
 ];
 
-const originOptions = ["Indicação", "Instagram", "Google", "LinkedIn", "Evento", "Outro"];
+const originOptions = ["Vitrine", "Indicação", "Instagram", "Google", "LinkedIn", "Evento", "Outro"];
 const RECENT_CLOSED_DAYS = 7;
 
 const isOlderThanDays = (value: string | null | undefined, days: number) => {
