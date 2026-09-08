@@ -1,11 +1,15 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { Store, Instagram, Mail, MessageCircle, Image as ImageIcon, Copy, Share2 } from "lucide-react";
+import { Store, Instagram, Mail, MessageCircle, Image as ImageIcon, Copy, Share2, Loader2, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface PublicItem {
   id: string;
@@ -56,6 +60,47 @@ export default function VitrinePublica() {
   const [items, setItems] = useState<PublicItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [leadItem, setLeadItem] = useState<PublicItem | null>(null);
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [form, setForm] = useState({ name: "", phone: "", email: "", message: "", bestTime: "" });
+
+  const openLead = (item: PublicItem) => {
+    setLeadItem(item);
+    setSent(false);
+    setSending(false);
+    setForm({ name: "", phone: "", email: "", message: "", bestTime: "" });
+  };
+
+  const submitLead = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!leadItem || !slug) return;
+    if (form.name.trim().length < 2) {
+      toast.error("Informe seu nome.");
+      return;
+    }
+    if (onlyDigits(form.phone).length < 10) {
+      toast.error("Informe um WhatsApp válido com DDD.");
+      return;
+    }
+    setSending(true);
+    const { data, error } = await (supabase as any).rpc("create_vitrine_lead", {
+      p_slug: slug,
+      p_item_id: leadItem.id,
+      p_name: form.name.trim(),
+      p_phone: form.phone,
+      p_email: form.email.trim() || null,
+      p_message: form.message.trim() || null,
+      p_best_time: form.bestTime.trim() || null,
+    });
+    setSending(false);
+    if (error || !data?.success) {
+      toast.error(data?.message || "Não foi possível enviar agora. Tente novamente.");
+      return;
+    }
+    setSent(true);
+    toast.success("Recebemos seu interesse!");
+  };
 
   useEffect(() => {
     void load();
@@ -186,18 +231,10 @@ export default function VitrinePublica() {
                   {it.description && <p className="text-sm text-muted-foreground line-clamp-3">{it.description}</p>}
                   {it.duration && <p className="text-xs text-muted-foreground">⏱ {it.duration}</p>}
                   <p className="text-lg font-bold text-primary mt-auto">{renderPrice(it)}</p>
-                  {whatsappDigits && (
-                    <Button size="sm" asChild className="w-full">
-                      <a
-                        href={`https://wa.me/${whatsappDigits}?text=${encodeURIComponent(`Olá! Tenho interesse no serviço ${it.name}. Pode me passar mais informações?`)}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <MessageCircle className="h-4 w-4" />
-                        Tenho interesse
-                      </a>
-                    </Button>
-                  )}
+                  <Button size="sm" className="w-full" onClick={() => openLead(it)}>
+                    <MessageCircle className="h-4 w-4" />
+                    Tenho interesse
+                  </Button>
                 </CardContent>
               </Card>
             ))}
@@ -208,6 +245,73 @@ export default function VitrinePublica() {
           Vitrine criada com <Link to="/inicio" className="underline">Gerir+</Link>
         </p>
       </main>
+
+      <Dialog open={!!leadItem} onOpenChange={(o) => !o && setLeadItem(null)}>
+        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
+          {sent ? (
+            <div className="flex flex-col items-center text-center gap-3 py-4">
+              <CheckCircle2 className="h-12 w-12 text-primary" />
+              <DialogTitle>Recebemos seu interesse</DialogTitle>
+              <p className="text-sm text-muted-foreground">Em breve entraremos em contato.</p>
+              {whatsappDigits && (
+                <Button asChild className="w-full mt-2">
+                  <a
+                    href={`https://wa.me/${whatsappDigits}?text=${encodeURIComponent(`Olá! Acabei de demonstrar interesse em ${leadItem?.name || ""} pela sua vitrine. Meu nome é ${form.name}.`)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                    Chamar agora no WhatsApp
+                  </a>
+                </Button>
+              )}
+              <Button variant="ghost" className="w-full" onClick={() => setLeadItem(null)}>Fechar</Button>
+            </div>
+          ) : (
+            <form onSubmit={submitLead} className="space-y-4">
+              <DialogHeader>
+                <DialogTitle>Tenho interesse</DialogTitle>
+                <DialogDescription>{leadItem?.name}</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-2">
+                <Label htmlFor="lead-name">Nome *</Label>
+                <Input id="lead-name" value={form.name} maxLength={120} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Seu nome" required />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="lead-phone">WhatsApp *</Label>
+                <Input id="lead-phone" type="tel" inputMode="tel" value={form.phone} maxLength={20} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="(00) 00000-0000" required />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="lead-email">E-mail</Label>
+                <Input id="lead-email" type="email" value={form.email} maxLength={255} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="opcional" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="lead-time">Melhor horário para contato</Label>
+                <Input id="lead-time" value={form.bestTime} maxLength={120} onChange={(e) => setForm({ ...form, bestTime: e.target.value })} placeholder="opcional — ex: manhã" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="lead-msg">Mensagem</Label>
+                <Textarea id="lead-msg" rows={3} value={form.message} maxLength={1000} onChange={(e) => setForm({ ...form, message: e.target.value })} placeholder="opcional" />
+              </div>
+              <Button type="submit" className="w-full" disabled={sending}>
+                {sending ? <><Loader2 className="h-4 w-4 animate-spin" /> Enviando...</> : "Enviar interesse"}
+              </Button>
+              {whatsappDigits && (
+                <Button type="button" variant="outline" className="w-full" asChild>
+                  <a
+                    href={`https://wa.me/${whatsappDigits}?text=${encodeURIComponent(`Olá! Tenho interesse no serviço ${leadItem?.name || ""}. Pode me passar mais informações?`)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                    Falar no WhatsApp
+                  </a>
+                </Button>
+              )}
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
