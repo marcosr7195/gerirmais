@@ -190,18 +190,10 @@ export default function VitrinePublica() {
                   {it.description && <p className="text-sm text-muted-foreground line-clamp-3">{it.description}</p>}
                   {it.duration && <p className="text-xs text-muted-foreground">⏱ {it.duration}</p>}
                   <p className="text-lg font-bold text-primary mt-auto">{renderPrice(it)}</p>
-                  {whatsappDigits && (
-                    <Button size="sm" asChild className="w-full">
-                      <a
-                        href={`https://wa.me/${whatsappDigits}?text=${encodeURIComponent(`Olá! Tenho interesse no serviço ${it.name}. Pode me passar mais informações?`)}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <MessageCircle className="h-4 w-4" />
-                        Tenho interesse
-                      </a>
-                    </Button>
-                  )}
+                  <Button size="sm" className="w-full" onClick={() => openLead(it)}>
+                    <MessageCircle className="h-4 w-4" />
+                    Tenho interesse
+                  </Button>
                 </CardContent>
               </Card>
             ))}
