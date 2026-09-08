@@ -254,7 +254,7 @@ export default function VitrinePublica() {
           {sent ? (
             <div className="flex flex-col items-center text-center gap-3 py-4">
               <CheckCircle2 className="h-12 w-12 text-primary" />
-              <DialogTitle>Recebemos seu interesse</DialogTitle>
+              <DialogTitle>{duplicate ? "Seu interesse já foi registrado" : "Recebemos seu interesse"}</DialogTitle>
               <p className="text-sm text-muted-foreground">Em breve entraremos em contato.</p>
               {whatsappDigits && (
                 <Button asChild className="w-full mt-2">
