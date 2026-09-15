@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { toast } from "sonner";
-import logoCompleta from "@/assets/logo-completa.png";
+import logoCompletaAsset from "@/assets/logo-gerirmais-oficial.png.asset.json";
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
@@ -44,7 +44,7 @@ export default function Auth() {
       <Card className="w-full max-w-md animate-fade-in">
         <CardHeader className="text-center space-y-2">
           <div className="flex items-center justify-center">
-            <img src={logoCompleta} alt="Gerir+" className="h-14 sm:h-16 w-auto object-contain" />
+            <img src={logoCompletaAsset.url} alt="Gerir+" className="h-14 sm:h-16 w-auto object-contain" />
           </div>
           <p className="text-muted-foreground text-sm">
             {isLogin ? "Entre na sua conta" : "Crie sua conta gratuita"}

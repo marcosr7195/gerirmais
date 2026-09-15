@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import logoCompleta from "@/assets/logo-completa.png";
+import logoCompletaAsset from "@/assets/logo-gerirmais-oficial.png.asset.json";
 
 export default function Termos() {
   return (
@@ -7,7 +7,7 @@ export default function Termos() {
       <header className="border-b border-border">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <Link to="/inicio">
-            <img src={logoCompleta} alt="Gerir+" className="h-10 w-auto object-contain" />
+            <img src={logoCompletaAsset.url} alt="Gerir+" className="h-10 w-auto object-contain" />
           </Link>
           <Link to="/inicio" className="text-sm text-primary hover:underline">
             Voltar

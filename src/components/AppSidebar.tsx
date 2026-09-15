@@ -4,8 +4,8 @@ import { useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
-import logoCompleta from "@/assets/logo-completa.png";
-import iconG from "@/assets/icon-g.png";
+import logoCompletaAsset from "@/assets/logo-gerirmais-oficial.png.asset.json";
+import iconGAsset from "@/assets/icon-gerirmais.png.asset.json";
 import {
   Sidebar,
   SidebarContent,
@@ -104,10 +104,10 @@ export function AppSidebar() {
         <div className={`p-4 ${collapsed ? "px-2" : ""}`}>
           <div className="flex items-center gap-2">
             {collapsed ? (
-              <img src={iconG} alt="Gerir+" className="w-8 h-8 rounded-lg shrink-0" />
+              <img src={iconGAsset.url} alt="Gerir+" className="w-8 h-8 rounded-lg shrink-0" />
             ) : (
               <div className="min-w-0 flex-1">
-                <img src={logoCompleta} alt="Gerir+" className="h-10 w-auto object-contain" />
+                <img src={logoCompletaAsset.url} alt="Gerir+" className="h-10 w-auto object-contain" />
                 <p className="text-sidebar-foreground/60 text-xs truncate mt-1">{profile?.business_name || "Meu Negócio"}</p>
               </div>
             )}
