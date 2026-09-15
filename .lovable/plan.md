@@ -16,6 +16,7 @@ Gerar um documento imprimível com tudo que foi feito e entregue em uma ordem de
 - Tabela do que foi executado: cada item do checklist com prazo próprio, data de conclusão e situação (concluído/pendente).
 - Observações da OS, quando houver.
 - Rodapé com contato do negócio e espaço para assinatura do cliente ("Recebi e conferi os serviços descritos acima"), com data.
+- Identificação discreta **“Gerado por Gerir+”** com a logo pequena do sistema: fixa no plano Starter; nos planos Pro e Scale, uma opção permite mostrar ou ocultar antes de gerar.
 
 ## Detalhes técnicos
 
@@ -23,3 +24,4 @@ Gerar um documento imprimível com tudo que foi feito e entregue em uma ordem de
 - Novo componente `src/components/operations/DeliveryReceipt.tsx` exportando uma função `generateDeliveryPdf(order, profile)`; sem tabelas novas nem migrações.
 - Dados: `service_orders` + `checklist_items` + `clients` + `deals` já carregados em `Entregas.tsx`; perfil vem do `AuthContext`.
 - Botão adicionado em `Entregas.tsx` (lista ativa e arquivo) e em `ArchivedOrderDetailsDialog.tsx`.
+- A regra da identificação usa o plano atual do usuário. A escolha de exibir no Pro/Scale será feita no momento da geração, sem alterar assinatura ou dados no banco.
