@@ -2,7 +2,7 @@ import { useState } from "react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { Download, FileCheck2 } from "lucide-react";
-import gerirMaisLogo from "@/assets/logo-completa.png";
+import gerirMaisLogoAsset from "@/assets/logo-gerirmais-oficial.png.asset.json";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePlan } from "@/hooks/usePlan";
 import { Button } from "@/components/ui/button";
@@ -214,7 +214,7 @@ export function DeliveryReceipt({ open, order, onOpenChange }: DeliveryReceiptPr
       const includeBranding = starter || showGerirMais;
       let brandLogo: string | null = null;
       if (includeBranding) {
-        try { brandLogo = await loadImageAsDataUrl(gerirMaisLogo); } catch { brandLogo = null; }
+        try { brandLogo = await loadImageAsDataUrl(gerirMaisLogoAsset.url); } catch { brandLogo = null; }
       }
       const pages = doc.getNumberOfPages();
       for (let page = 1; page <= pages; page += 1) {
