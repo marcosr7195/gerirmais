@@ -1,5 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { Printer } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface ChecklistItem {
   id: string;
@@ -23,6 +25,7 @@ interface ArchivedOrderDetailsDialogProps {
   open: boolean;
   order: ServiceOrderDetails | null;
   onOpenChange: (open: boolean) => void;
+  onPrint: (orderId: string) => void;
 }
 
 const formatDate = (value: string | null | undefined) => {
@@ -41,7 +44,7 @@ const formatCurrency = (value: number | null | undefined) => {
   }).format(value);
 };
 
-export function ArchivedOrderDetailsDialog({ open, order, onOpenChange }: ArchivedOrderDetailsDialogProps) {
+export function ArchivedOrderDetailsDialog({ open, order, onOpenChange, onPrint }: ArchivedOrderDetailsDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
@@ -95,6 +98,12 @@ export function ArchivedOrderDetailsDialog({ open, order, onOpenChange }: Archiv
               ) : (
                 <p className="text-sm text-muted-foreground">Nenhum item registrado.</p>
               )}
+            </div>
+            <div className="flex justify-end border-t pt-4">
+              <Button onClick={() => onPrint(order.id)}>
+                <Printer className="h-4 w-4" />
+                Imprimir entrega
+              </Button>
             </div>
           </div>
         )}

@@ -1,4 +1,4 @@
-import { Archive, Clock3, FileText } from "lucide-react";
+import { Archive, Clock3, FileText, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
@@ -16,6 +16,7 @@ interface ArchivedOrderRowProps {
   autoArchived: boolean;
   onArchive: (orderId: string) => void;
   onOpenDetails: (orderId: string) => void;
+  onPrint: (orderId: string) => void;
 }
 
 const formatDateTime = (value: string | null) => {
@@ -34,7 +35,7 @@ const formatCurrency = (value: number | null | undefined) => {
   }).format(value);
 };
 
-export function ArchivedOrderRow({ order, autoArchived, onArchive, onOpenDetails }: ArchivedOrderRowProps) {
+export function ArchivedOrderRow({ order, autoArchived, onArchive, onOpenDetails, onPrint }: ArchivedOrderRowProps) {
   const isArchived = order.status === "arquivado" || autoArchived;
 
   return (
@@ -61,6 +62,10 @@ export function ArchivedOrderRow({ order, autoArchived, onArchive, onOpenDetails
       </button>
 
       <div className="flex items-center gap-2 sm:justify-end">
+        <Button variant="outline" size="sm" onClick={() => onPrint(order.id)}>
+          <Printer className="h-4 w-4" />
+          Imprimir entrega
+        </Button>
         {!isArchived && (
           <Button variant="outline" size="sm" onClick={() => onArchive(order.id)}>
             <Archive className="h-4 w-4" />
