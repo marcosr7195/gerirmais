@@ -91,16 +91,18 @@ export function DeliveryReceipt({ open, order, onOpenChange }: DeliveryReceiptPr
       const margin = 15;
       let y = margin;
 
+      let businessLogoLoaded = false;
       if (profile.logo_url) {
         try {
           const logo = await loadImageAsDataUrl(profile.logo_url);
           doc.addImage(logo, "PNG", margin, y, 25, 25, undefined, "FAST");
+          businessLogoLoaded = true;
         } catch {
           // O documento continua válido quando a logo externa estiver indisponível.
         }
       }
 
-      const businessX = profile.logo_url ? margin + 30 : margin;
+      const businessX = businessLogoLoaded ? margin + 30 : margin;
       doc.setFont("helvetica", "bold");
       doc.setFontSize(16);
       doc.setTextColor(31, 41, 55);

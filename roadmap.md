@@ -1,3 +1,3 @@
 # Roadmap
 
-- [ ] Gerar comprovante de entrega em PDF com logos e regra por plano.
+- [x] Gerar comprovante de entrega em PDF com logos e regra por plano.

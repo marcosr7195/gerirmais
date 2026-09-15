@@ -487,7 +487,10 @@ export default function Entregas() {
         open={detailsOpen}
         order={detailsOrder}
         onOpenChange={setDetailsOpen}
-        onPrint={(orderId) => setPrintOrderId(orderId)}
+        onPrint={(orderId) => {
+          setDetailsOpen(false);
+          setPrintOrderId(orderId);
+        }}
       />
       <DeliveryReceipt open={!!printOrderId} order={printOrder} onOpenChange={(value) => !value && setPrintOrderId(null)} />
 
