@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { CheckCircle2, Clock, AlertTriangle, Pencil, Plus, Search, Trash2 } from "lucide-react";
+import { CheckCircle2, Clock, AlertTriangle, Pencil, Plus, Printer, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { ArchivedOrderDetailsDialog } from "@/components/operations/ArchivedOrderDetailsDialog";
 import { ArchivedOrderRow } from "@/components/operations/ArchivedOrderRow";
+import { DeliveryReceipt } from "@/components/operations/DeliveryReceipt";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -33,8 +34,8 @@ interface ServiceOrder {
   deal_id: string | null;
   completed_at: string | null;
   created_at?: string | null;
-  clients?: { name: string } | null;
-  deals?: { value: number | null; title: string | null } | null;
+  clients?: { name: string; trade_name?: string | null; phone?: string | null; email?: string | null } | null;
+  deals?: { value: number | null; title: string | null; notes?: string | null } | null;
   checklist?: ChecklistItem[];
 }
 
@@ -71,6 +72,7 @@ export default function Entregas() {
   const [archiveSearch, setArchiveSearch] = useState("");
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [detailsOrderId, setDetailsOrderId] = useState<string | null>(null);
+  const [printOrderId, setPrintOrderId] = useState<string | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [editForm, setEditForm] = useState({ id: "", title: "", client_id: "", due_date: "", status: "" });
   const loadedRef = useRef(false);
@@ -94,7 +96,7 @@ export default function Entregas() {
 
     const { data } = await supabase
       .from("service_orders")
-      .select("*, clients(name), deals(value, title)")
+      .select("*, clients(name, trade_name, phone, email), deals(value, title, notes)")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false });
 
@@ -364,6 +366,10 @@ export default function Entregas() {
     () => orders.find((order) => order.id === detailsOrderId) || null,
     [detailsOrderId, orders],
   );
+  const printOrder = useMemo(
+    () => orders.find((order) => order.id === printOrderId) || null,
+    [printOrderId, orders],
+  );
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -477,7 +483,13 @@ export default function Entregas() {
         </DialogContent>
       </Dialog>
 
-      <ArchivedOrderDetailsDialog open={detailsOpen} order={detailsOrder} onOpenChange={setDetailsOpen} />
+      <ArchivedOrderDetailsDialog
+        open={detailsOpen}
+        order={detailsOrder}
+        onOpenChange={setDetailsOpen}
+        onPrint={(orderId) => setPrintOrderId(orderId)}
+      />
+      <DeliveryReceipt open={!!printOrderId} order={printOrder} onOpenChange={(value) => !value && setPrintOrderId(null)} />
 
       <AlertDialog open={!!archiveConfirm} onOpenChange={(o) => !o && setArchiveConfirm(null)}>
         <AlertDialogContent>
@@ -544,6 +556,9 @@ export default function Entregas() {
                         <div className="flex items-center gap-1 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
                           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(os)}>
                             <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setPrintOrderId(os.id)} title="Imprimir entrega">
+                            <Printer className="h-3.5 w-3.5 text-muted-foreground" />
                           </Button>
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
@@ -666,6 +681,7 @@ export default function Entregas() {
                   autoArchived={isOlderThanAutoArchive(order.completed_at)}
                   onArchive={archiveOS}
                   onOpenDetails={openDetails}
+                  onPrint={setPrintOrderId}
                 />
               ))}
             </div>
