@@ -23,13 +23,25 @@ Legenda de destino: **ORG** = `organization_id`, **BU** = `business_unit_id`, **
 | 7 | `checklist_items` | Tarefas da OS, com `due_date` | PK `id`; FKs `service_order_id`, `user_id` | Sim | Redundante com a OS pai | **BU** herdado | Usado nas "Pendências de hoje" do Dashboard |
 | 8 | `client_interactions` | Timeline de atendimento (manual + automática) | PK `id`; FK `client_id`; `related_entity_id` solto | Sim | Dono/isolamento | **BU** (+ AUT, para distinguir quem registrou) | `related_entity_type/id` é polimórfico e **não** tem FK — validação de unidade precisa ser feita em código/trigger |
 | 9 | `transactions` | Finanças **empresariais** | PK `id`; FK `service_order_id`, `user_id` | Sim | Dono/isolamento | **BU** (+ AUT) | Base do Dashboard e do fluxo de caixa; contagens precisam bater antes/depois |
-| 10 | `categories` | Categorias financeiras empresariais (semeadas no cadastro) | PK `id`; FK `user_id` | Sim | Dono/isolamento | **BU** (ou ORG com override por unidade) | **PEND**: categorias compartilhadas entre unidades ou duplicadas por unidade? `handle_new_user` semeia 19 categorias por usuário |
+| 10 | `categories` | Categorias financeiras empresariais (semeadas no cadastro) | PK `id`; FK `user_id` | Sim | Dono/isolamento | **ORG** (decisão D1 aprovada: catálogo compartilhado entre unidades) | Catálogo único por organização, sem duplicação por unidade; `transactions` continua obrigatoriamente com `business_unit_id`. `handle_new_user` semeia 19 categorias — passa a semear por organização |
 | 11 | `vitrine_items` | Catálogo público de serviços | PK `id` (sem FK declarada para `auth.users`) | Sim | Dono/isolamento; determina o catálogo público | **BU** | Lida pela RPC pública `get_vitrine_by_slug` via `profiles.slug`; imagens em `vitrine/{user_id}/…` |
 | 12 | `financas_pessoais` | Finanças **pessoais** do indivíduo | PK `id`; FK `user_id` | Sim | Dado estritamente pessoal | **USR** (manter) | Não deve receber `business_unit_id`. Risco: backfill genérico "tudo vira unidade" contaminaria dado pessoal |
 | 13 | `financas_pessoais_categorias` | Categorias pessoais | PK `id`; FK `user_id` | Sim | Dado pessoal | **USR** | Idem |
 | 14 | `credit_cards` | Cartões pessoais | PK `id`; FK `user_id` | Sim | Dado pessoal | **USR** | Idem |
 | 15 | `credit_card_purchases` | Compras no cartão | PK `id`; FKs `card_id`, `user_id` | Sim | Dado pessoal | **USR** | Idem |
 | 16 | `credit_card_installments` | Parcelas/faturas | PK `id`; FKs `purchase_id`, `card_id`, `user_id` | Sim | Dado pessoal | **USR** | Ao pagar fatura gera lançamento em `financas_pessoais` (não em `transactions`) — fronteira pessoal/empresarial já existe e deve ser preservada |
+
+### A.1 Decisões arquiteturais aprovadas (setembro/2026)
+
+As cinco decisões abaixo foram aprovadas pelo responsável do produto e passam a orientar o schema-alvo, o plano de migração, a RLS e a matriz de testes. **Aprovação de decisão não é autorização de implementação** — nenhuma migration foi executada.
+
+| # | Tema | Decisão aprovada |
+|---|------|------------------|
+| D1 | Categorias financeiras | Pertencem à **organização** (`organization_id`) e são compartilhadas entre as unidades. Cada lançamento continua obrigatoriamente vinculado à unidade (`business_unit_id`). Sem duplicação de categorias por unidade. Relatórios consolidados usam o catálogo comum sem misturar lançamentos. Personalização por unidade fica fora da 1ª versão. |
+| D2 | Dados bancários | Contas bancárias pertencem à **entidade fiscal** (`legal_entity_id`) e são associadas explicitamente às unidades autorizadas a usá-las. Todo lançamento registra ao mesmo tempo a unidade de origem e a conta usada. Conta compartilhada nunca elimina a identificação da unidade responsável. RLS impede uso por unidades/membros não autorizados. |
+| D3 | Numeração de propostas | Sequência **independente por unidade** (`business_unit_id`), única dentro da unidade (não na organização). Prefixo opcional por unidade para identificação visual. Geração transacional e segura contra concorrência; proibido o cálculo "maior número + 1" no frontend. |
+| D4 | Administrador da plataforma | Papel **separado** dos papéis das organizações clientes, em estrutura de autorização própria. Escopo: contas, organizações, planos, status de assinatura, ativação/suspensão, configurações globais, saúde do sistema, suporte e auditoria, além de metadados técnicos mínimos. Limites: não vira membro de organização, não tem acesso padrão a dados operacionais, não pode depender de verificação apenas na interface; acesso excepcional de suporte deve ser explícito, temporário, justificado e auditado. |
+| D5 | Metas do painel | Persistidas no **banco**, por unidade e período (`business_unit_id`, período, indicador, valor-alvo), com unicidade por (unidade, indicador, período). Leitura/escrita respeitam as permissões da unidade; a visão consolidada agrega apenas unidades autorizadas. `localStorage` pode permanecer só como cache/rascunho, nunca como registro oficial. |
 
 Observações estruturais:
 - Não existe hoje nenhuma tabela de organização, unidade, entidade fiscal, membros ou papéis. Não existe `user_roles`; o único "admin" é um e-mail fixo em código (`marcos7195@gmail.com`) em `AppSidebar.tsx`, `Admin.tsx` e `admin-users/index.ts`.
