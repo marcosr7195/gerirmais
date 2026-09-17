@@ -143,12 +143,14 @@ Riscos: os arquivos já publicados têm URL pública gravada em `profiles.logo_u
 | Classificação | Ocorrências |
 |---|---|
 | **Autenticidade do usuário** | `auth.users`, `AuthContext`, `profiles.user_id` (parte identidade), políticas de storage por `auth.uid()` |
-| **Propriedade da organização** | `profiles.plano`, `status_assinatura`, `data_inicio`, `data_vencimento`, `origem`; `kiwify-webhook`; `admin-users`; `usePlan`/`TrialBanner`/`FeatureGate` |
-| **Propriedade da unidade** | `clients`, `deals`, `deal_items`, `proposals`, `service_orders`, `checklist_items`, `client_interactions`, `transactions`, `categories`, `vitrine_items`, `profiles.slug/business_name/slogan/logo_url/whatsapp/instagram/endereço/banco` |
-| **Autoria/auditoria** | `client_interactions` manuais, criação de deals/OS/propostas, `is_automatic` |
-| **Dado estritamente pessoal** | `financas_pessoais`, `financas_pessoais_categorias`, `credit_cards`, `credit_card_purchases`, `credit_card_installments`, meta mensal em `localStorage` |
+| **Propriedade da organização** | `profiles.plano`, `status_assinatura`, `data_inicio`, `data_vencimento`, `origem`; `categories` (D1); `kiwify-webhook`; `admin-users`; `usePlan`/`TrialBanner`/`FeatureGate` |
+| **Propriedade da entidade fiscal** | CNPJ/razão social/CNAEs; contas bancárias (`bank_accounts`, D2), associadas às unidades autorizadas |
+| **Propriedade da unidade** | `clients`, `deals`, `deal_items`, `proposals` (+ sequência própria, D3), `service_orders`, `checklist_items`, `client_interactions`, `transactions` (unidade + conta usada, D2), `vitrine_items`, `goals` (D5), `profiles.slug/business_name/slogan/logo_url/whatsapp/instagram/endereço` |
+| **Autoria/auditoria** | `client_interactions` manuais, criação de deals/OS/propostas, `is_automatic`, grants excepcionais de suporte da plataforma (D4) |
+| **Dado estritamente pessoal** | `financas_pessoais`, `financas_pessoais_categorias`, `credit_cards`, `credit_card_purchases`, `credit_card_installments` |
+| **Administração da plataforma** | Papéis de plataforma separados dos papéis da organização; `admin-users` e configurações globais (D4) |
 | **Integração externa** | `create_vitrine_lead`, `get_vitrine_by_slug`, `kiwify-webhook`, `admin-users`, buckets públicos |
-| **Decisão pendente** | Categorias financeiras (org vs unidade); dados fiscais/bancários (unidade vs entidade fiscal); numeração de propostas (por unidade vs por organização); escopo do admin da plataforma; se metas do dashboard viram tabela por unidade |
+| **Decisão pendente** | Divisão fina de `profiles` (quais campos ficam em `business_units` × `legal_entities`); se a visão consolidada terá cache materializado; política de retenção/auditoria dos grants excepcionais de suporte; migração de caminhos de storage (cópia + reescrita de URL) e janela de manutenção |
 
 ---
 
@@ -181,6 +183,33 @@ Unicidade: `slug` global (vitrine pública); `(organization_id, name)`. Índices
 Funções auxiliares `SECURITY DEFINER` previstas (para evitar recursão de RLS): `is_org_member(uuid, uuid)`, `has_bu_access(uuid, uuid)`, `bu_role(uuid, uuid)`.
 
 Em cada tabela operacional: `business_unit_id uuid` (nullable na fase aditiva) + índice `(business_unit_id, created_at)` e, quando aplicável, `created_by_user_id uuid`.
+
+### G.1 Estruturas derivadas das decisões aprovadas
+
+**`categories` (D1)** — passa a ter `organization_id uuid not null → organizations` no lugar de `user_id`/`business_unit_id`.
+Unicidade: `(organization_id, name, type)`. Índice: `organization_id`. `transactions.category_id` continua apontando para o catálogo da organização, enquanto `transactions.business_unit_id` mantém a separação dos lançamentos. Personalização por unidade fica fora da 1ª versão.
+
+**`bank_accounts` (D2)** — conta bancária da entidade fiscal.
+Campos: `id uuid pk`, `legal_entity_id uuid not null → legal_entities`, `bank_name`, `agency`, `account_number`, `account_type`, `pix_key`, `account_holder`, `status`, `created_at`, `updated_at`.
+Unicidade: `(legal_entity_id, bank_name, agency, account_number)`. Índice: `legal_entity_id`.
+
+**`bank_account_business_units` (D2)** — associação explícita de uso.
+Campos: `id`, `bank_account_id → bank_accounts`, `business_unit_id → business_units`, `created_at`; unique `(bank_account_id, business_unit_id)`; índices em ambos.
+`transactions` ganha `bank_account_id uuid` e mantém `business_unit_id` obrigatório: todo lançamento identifica ao mesmo tempo a unidade responsável e a conta utilizada. Constraint/trigger valida que a conta está associada à unidade do lançamento.
+
+**`proposal_sequences` (D3)** — controle transacional da numeração.
+Campos: `business_unit_id uuid pk → business_units`, `prefix text null`, `last_number integer not null default 0`, `updated_at`.
+Função `next_proposal_number(_business_unit_id uuid)` `SECURITY DEFINER`, com `UPDATE … SET last_number = last_number + 1 RETURNING`, garantindo atomicidade sob concorrência. `proposals` ganha `sequence_number integer` e `unit_prefix text`, com unicidade `(business_unit_id, sequence_number)` — números podem se repetir entre unidades da mesma organização.
+
+**Papéis de plataforma (D4)** — estrutura de autorização **separada** de `app_role`.
+`platform_role` (enum): `plataforma_admin`, `plataforma_suporte`, `plataforma_auditoria`.
+`platform_admins`: `id`, `user_id uuid not null`, `role platform_role not null`, `created_at`; unique `(user_id, role)`.
+`platform_access_grants` (acesso excepcional a dados de uma organização): `id`, `organization_id`, `granted_to_user_id`, `granted_by_user_id`, `reason text not null`, `expires_at timestamptz not null`, `revoked_at`, `created_at`.
+Função `has_platform_role(uuid, platform_role)` `SECURITY DEFINER`. Papéis de plataforma **não** concedem acesso às tabelas operacionais; apenas um grant vigente e não revogado pode concedê-lo, sempre registrado em auditoria. O gate por e-mail em código é removido.
+
+**`goals` (D5)** — metas por unidade e período.
+Campos: `id uuid pk`, `business_unit_id uuid not null → business_units`, `indicator text not null` (ex.: `receita_mensal`), `period_start date not null`, `period_end date not null`, `target_value numeric not null`, `created_by_user_id`, `created_at`, `updated_at`.
+Unicidade: `(business_unit_id, indicator, period_start, period_end)`. Índice: `(business_unit_id, period_start)`. RLS por acesso à unidade; a visão consolidada agrega apenas unidades autorizadas. `localStorage` fica restrito a cache/rascunho.
 
 ---
 
