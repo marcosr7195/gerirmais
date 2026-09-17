@@ -190,30 +190,30 @@ Em cada tabela operacional: `business_unit_id uuid` (nullable na fase aditiva) +
 Snapshot completo do banco e inventário de contagens por tabela (`count(*)` global e por `user_id`). Congelar mudanças estruturais concorrentes.
 
 **Fase 1 — Schema aditivo**
-Criar `organizations`, `legal_entities`, `business_units`, enum `app_role`, `organization_members`, `business_unit_members`, com GRANTs e RLS próprias. Nada existente é tocado.
+Criar `organizations`, `legal_entities`, `business_units`, enum `app_role`, `organization_members`, `business_unit_members`, além de `bank_accounts` + `bank_account_business_units` (D2), `proposal_sequences` (D3), `goals` (D5) e as estruturas de papel de plataforma `platform_role` + `platform_admins` + `platform_access_grants` (D4), com GRANTs e RLS próprias. Nada existente é tocado.
 *Rollback:* `drop` das novas tabelas (ainda sem dados de produção referenciados).
 
 **Fase 2 — Colunas aditivas**
-Adicionar `business_unit_id uuid NULL` (+ `created_by_user_id uuid NULL` onde couber) às 11 tabelas operacionais. Sem `NOT NULL`, sem FK obrigatória ainda, com índices criados `CONCURRENTLY` quando possível.
+Adicionar `business_unit_id uuid NULL` (+ `created_by_user_id uuid NULL` onde couber) às 10 tabelas operacionais que passam a ser por unidade. Em `categories`, adicionar `organization_id uuid NULL` em vez de `business_unit_id` (D1). Em `transactions`, adicionar também `bank_account_id uuid NULL` (D2). Em `proposals`, adicionar `unit_prefix text NULL` e `sequence_number integer NULL` (D3). Sem `NOT NULL`, sem FK obrigatória ainda, com índices criados `CONCURRENTLY` quando possível.
 *Rollback:* `drop column` (colunas ainda não lidas pela aplicação).
 
 **Fase 3 — Backfill**
 Para cada `profiles` existente: criar 1 `organization` (herdando plano/status/vencimento/origem), 1 `legal_entity` (se houver documento), 1 `business_unit` padrão (herdando nome, slug, logo, contatos, endereço), 1 `organization_members` e 1 `business_unit_members` com papel `proprietario`.
-Depois, `UPDATE … SET business_unit_id = <bu do user_id>, created_by_user_id = user_id` nas 11 tabelas operacionais. Tabelas pessoais (5) **não são tocadas**.
-*Validação:* toda linha operacional com `business_unit_id NOT NULL`; contagem por `(user_id)` antes = contagem por `(business_unit_id)` depois; zero divergência pai/filho em `deal_items`/`checklist_items`.
-*Rollback:* `UPDATE … SET business_unit_id = NULL` + remoção dos registros novos.
+Depois, `UPDATE … SET business_unit_id = <bu do user_id>, created_by_user_id = user_id` nas tabelas operacionais por unidade. `categories` recebe `organization_id` e é **deduplicada** por `(organization_id, nome, tipo)` (D1), com remapeamento das `transactions` para a categoria sobrevivente. Dados bancários de `profiles` viram 1 `bank_accounts` da entidade fiscal, associada à unidade padrão; `transactions` existentes recebem essa conta (D2). Cria-se 1 `proposal_sequences` por unidade com `last_number = max(sequência atual)` e `proposals.sequence_number` é preenchido a partir do número atual (D3). Metas em `localStorage` **não** são migradas automaticamente: `goals` nasce vazia e a interface passa a gravar no banco, usando o valor local apenas como sugestão inicial (D5). Tabelas pessoais (5) **não são tocadas**.
+*Validação:* toda linha operacional com `business_unit_id NOT NULL`; contagem por `(user_id)` antes = contagem por `(business_unit_id)` depois; zero divergência pai/filho em `deal_items`/`checklist_items`; zero `transactions` apontando para categoria removida na deduplicação; zero `transactions` com `bank_account_id` de conta não associada à sua unidade; zero colisão em `(business_unit_id, sequence_number)`.
+*Rollback:* `UPDATE … SET business_unit_id = NULL` (+ `organization_id`, `bank_account_id`, `sequence_number`) e remoção dos registros novos; a deduplicação de categorias exige snapshot prévio do mapa antigo→novo para ser revertida.
 
 **Fase 4 — Compatibilidade dupla**
-`user_id` e `business_unit_id` coexistem. Triggers passam a preencher **os dois** em inserts novos. RLS ampliada para `auth.uid() = user_id OR has_bu_access(auth.uid(), business_unit_id)` — permissiva, sem remover nada.
+`user_id` e `business_unit_id` coexistem. Triggers passam a preencher **os dois** em inserts novos. RLS ampliada para `auth.uid() = user_id OR has_bu_access(auth.uid(), business_unit_id)` — permissiva, sem remover nada. Em `categories` a regra equivalente é `auth.uid() = user_id OR is_org_member(auth.uid(), organization_id)` (D1). Em `bank_accounts`, acesso por membro da organização dona da entidade fiscal **e** com papel financeiro; uso em lançamento exige associação conta↔unidade (D2). `goals` já nasce com RLS por unidade (D5). Papéis de plataforma (D4) ficam em tabelas/funções separadas e **não** entram em nenhuma política das tabelas operacionais.
 *Rollback:* restaurar as políticas antigas (guardadas em script).
 
 **Fase 5 — Aplicação**
-`AuthContext` passa a carregar organização, unidades e unidade ativa (persistida). Telas gravam `business_unit_id`. Seletor de unidade e visão consolidada. Sequência de propostas por unidade. Vitrine/storage por unidade (cópia de arquivos + reescrita de URL, sem apagar origem).
+`AuthContext` passa a carregar organização, unidades e unidade ativa (persistida). Telas gravam `business_unit_id`. Seletor de unidade e visão consolidada. Numeração de propostas passa a vir da RPC transacional `next_proposal_number(business_unit_id)`, eliminando o cálculo "maior número + 1" do `ProposalGenerator` (D3). Finanças passam a exigir conta bancária autorizada no lançamento (D2). Dashboard lê e grava metas em `goals`, mantendo `localStorage` apenas como cache/rascunho (D5). `Admin.tsx` passa a usar o papel de plataforma no banco, sem gate por e-mail em código (D4). Vitrine/storage por unidade (cópia de arquivos + reescrita de URL, sem apagar origem).
 *Rollback:* reversão de frontend apenas — o banco continua compatível.
 
 **Fase 6 — Endurecimento da RLS**
-Após período de observação sem escritas legadas: RLS baseada exclusivamente em membros/papéis; `business_unit_id NOT NULL` + FK; storage por unidade.
-*Critérios para tornar obrigatório:* zero linhas com `business_unit_id IS NULL` por 14 dias; zero escritas sem unidade nos logs; testes de isolamento 100% verdes.
+Após período de observação sem escritas legadas: RLS baseada exclusivamente em membros/papéis; `business_unit_id NOT NULL` + FK (`categories.organization_id NOT NULL`); `transactions.bank_account_id` obrigatório quando houver conta cadastrada; unicidade `(business_unit_id, sequence_number)` em `proposals`; storage por unidade; `admin-users` passa a exigir papel de plataforma no banco e escopo explícito de organização.
+*Critérios para tornar obrigatório:* zero linhas com `business_unit_id IS NULL` por 14 dias; zero escritas sem unidade nos logs; zero metas gravadas apenas em `localStorage`; testes de isolamento 100% verdes.
 
 **Fase 7 — Depreciação de `user_id`**
 Somente após Fase 6 estável. `user_id` operacional vira `created_by_user_id` (auditoria) e deixa de ser critério de acesso. Remoção de coluna exige aprovação humana e backup.
@@ -241,4 +241,16 @@ Pontos que exigem backup ou aprovação humana explícita: Fases 0, 3, 6 e 7; qu
 | 13 | Rollback da Fase 3 | Contagens de todas as tabelas idênticas ao snapshot da Fase 0 |
 | 14 | Finanças pessoais e cartões | Permanecem por `user_id`, invisíveis a qualquer membro da organização |
 | 15 | Duplicidade de `slug` entre unidades | Rejeitada por constraint única |
-| 16 | Numeração de propostas em duas unidades | Sequências independentes, sem colisão |
+| 16 | Numeração de propostas em duas unidades | Sequências independentes, sem colisão (D3) |
+| 17 | Duas unidades da mesma organização usando categorias financeiras | Mesmo catálogo por `organization_id`, sem duplicatas; lançamentos permanecem separados por `business_unit_id` (D1) |
+| 18 | Relatório consolidado por categoria | Agrupa pelo catálogo comum e identifica a unidade de origem de cada lançamento (D1) |
+| 19 | Unidade tenta usar conta bancária não associada a ela | Rejeitado pela RLS/constraint, não apenas pela interface (D2) |
+| 20 | Conta bancária compartilhada entre duas unidades | Cada lançamento mantém unidade de origem e conta usada; nenhum lançamento fica sem unidade (D2) |
+| 21 | Duas propostas geradas simultaneamente na mesma unidade | Números distintos e consecutivos; nenhuma colisão sob concorrência (D3) |
+| 22 | Prefixo de unidade em propostas | Exibido corretamente; unicidade continua por `(business_unit_id, número)` (D3) |
+| 23 | Admin da plataforma consulta dados operacionais de uma organização | Zero linhas por padrão; acesso apenas via concessão explícita, temporária e auditada (D4) |
+| 24 | Admin da plataforma altera plano/status de assinatura | Permitido e registrado em auditoria; sem virar membro da organização (D4) |
+| 25 | Bypass da interface de admin (chamada direta à API) | Bloqueado no banco pelas estruturas de autorização de plataforma (D4) |
+| 26 | Criar meta para unidade X | Persistida no banco com `(business_unit_id, indicador, período)` único; `localStorage` não é fonte de verdade (D5) |
+| 27 | Membro sem acesso à unidade X lê/edita meta de X | Rejeitado pela RLS (D5) |
+| 28 | Visão consolidada de metas | Agrega somente metas das unidades autorizadas (D5) |
