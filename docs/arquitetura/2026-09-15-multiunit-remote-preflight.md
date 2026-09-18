@@ -8,6 +8,14 @@
 
 Comparar o estado efetivo do Supabase com as 20 migrations locais antes de escrever qualquer migration multiunidade.
 
+## Baseline da execução
+
+- Branch: `planning/multiunit-preflight-20260915`
+- Commit local: `cf26f89fc6661e84dfb7c876c39801a21317117d`
+- Referência remota: `98c218dba6c8743091f25d5fcaeb14976513a764`
+- Executado em UTC: `2026-09-18T12:05:28Z`
+- Estado do working tree: sem mudança rastreada antes desta atualização; três artefatos Lovable preexistentes permanecem não rastreados e fora do escopo.
+
 ## Artefato
 
 `supabase/diagnostics/20260915_multiunit_preflight_readonly.sql`
