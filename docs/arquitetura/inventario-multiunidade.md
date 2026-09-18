@@ -76,7 +76,7 @@ Consequências:
 | `update_updated_at_column()` | Não | — | Sem impacto |
 
 ### B.3 Triggers
-20 triggers: `on_auth_user_created` (em `auth.users`), 4 de log/auditoria, 2 de ciclo de vida de deals, e os demais `updated_at`. Todos os de log copiam `NEW.user_id` — pontos obrigatórios de atualização na fase de RLS.
+17 triggers ativos reconstruídos pela ordem das migrations: `on_auth_user_created` (em `auth.users`), 4 de log/auditoria, 1 trigger ativo de ciclo de vida de deals e os demais `updated_at`. A história contém 18 comandos `CREATE TRIGGER` e 2 `DROP TRIGGER`; um nome foi substituído durante a evolução. Todos os triggers de log copiam `NEW.user_id` — pontos obrigatórios de atualização na fase de RLS.
 
 ### B.4 `service_role`
 Usado apenas nas duas Edge Functions (`admin-users`, `kiwify-webhook`), que **ignoram RLS**. São hoje o único caminho de escrita cross-tenant e precisarão de escopo explícito de organização.
