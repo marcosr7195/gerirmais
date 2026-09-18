@@ -2,7 +2,7 @@
 
 ## Status
 
-**FEITO NÃO TESTADO em 15/09/2026.** A consulta somente leitura foi criada e passou por validação estática local. Não foi executada contra PostgreSQL/Supabase porque `supabase` e `psql` não estão instalados neste ambiente e nenhuma credencial de banco foi usada.
+**VERIFICADO em 18/09/2026.** A consulta somente leitura passou pela validação estática local e foi executada manualmente no SQL Editor do Lovable Cloud. A saída consolidada foi capturada, sanitizada e reconciliada sem executar DDL, DML, migration ou alteração de produção.
 
 ## Objetivo
 
@@ -67,18 +67,18 @@ Quando `psql` estiver disponível e a URL segura vier do ambiente, sem imprimi-l
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f supabase/diagnostics/20260915_multiunit_preflight_readonly.sql
 ```
 
-Alternativa: executar no SQL Editor do Supabase após revisão humana, preservando a transação `READ ONLY`.
+Alternativa efetivamente utilizada: SQL Editor do Lovable Cloud, após revisão humana, preservando a transação `READ ONLY`.
 
 ## Critérios de aceite
 
 - [x] arquivo de diagnóstico existe;
 - [x] escopo limitado a metadados e contagens;
 - [x] validação estática não encontrou verbos destrutivos/executáveis;
-- [ ] SQL aceito pelo PostgreSQL do ambiente-alvo;
-- [ ] resultado remoto capturado e sanitizado;
-- [ ] migrations locais e remotas reconciliadas;
-- [ ] órfãos e divergências classificados;
-- [ ] evidência vinculada à tarefa operacional.
+- [x] SQL aceito pelo PostgreSQL do ambiente-alvo;
+- [x] resultado remoto capturado e sanitizado;
+- [x] migrations locais e remotas reconciliadas;
+- [x] órfãos e divergências classificados;
+- [x] evidência vinculada à tarefa operacional.
 
 ## Aprovação e limites
 
@@ -86,4 +86,4 @@ Preparar e revisar o diagnóstico não exige decisão comercial. A execução re
 
 ## Próxima ação
 
-Executar o diagnóstico uma única vez em ambiente seguro quando houver cliente/acesso técnico validado. Depois, fechar a matriz de decomposição de `profiles` e transformar o plano em migrations TDD pequenas.
+Executar a consulta complementar somente leitura descrita em `docs/arquitetura/2026-09-17-remote-schema-reconciliation.md` para quantificar exceções de `profiles`, propostas, categorias e tabelas pessoais. Depois, fechar nomes canônicos e solicitar autorização específica para criar apenas os testes locais da fundação. Nenhuma migration está autorizada.
