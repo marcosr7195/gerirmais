@@ -2,6 +2,10 @@ import { z } from "zod";
 
 const MAX_METADATA_ENTRIES = 20;
 const MAX_METADATA_BYTES = 4 * 1024;
+const TENANT_KEYS = new Set([
+  "organization_id", "organizationid", "org_id", "tenant_id",
+  "business_unit_id", "businessunitid", "unit_id", "integration_id", "user_id",
+]);
 
 const trimmedText = (maxLength: number) =>
   z.string().trim().min(1).max(maxLength);
@@ -42,6 +46,16 @@ const metadataScalarSchema = z.union([
 const metadataSchema = z
   .record(z.string().min(1).max(64), metadataScalarSchema)
   .superRefine((metadata, context) => {
+    for (const key of Object.keys(metadata)) {
+      if (TENANT_KEYS.has(key.toLowerCase())) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Metadata must not contain tenant identifiers",
+          path: [key],
+        });
+      }
+    }
+
     if (Object.keys(metadata).length > MAX_METADATA_ENTRIES) {
       context.addIssue({
         code: z.ZodIssueCode.custom,

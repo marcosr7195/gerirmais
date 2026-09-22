@@ -1,13 +1,13 @@
-# Contrato do webhook de entrada de leads de sites (W0)
+# Webhook de entrada de leads de sites — implementação local
 
 **Data:** 2026-09-21
-**Estado:** contrato local; sem endpoint, persistência ou autenticação real
+**Estado:** **VALIDADO LOCALMENTE**; sem deploy ou integração real provisionada
 
 ## Escopo
 
-Este documento define a primeira fatia, puramente local, do contrato de entrada de leads enviados por sites. O W0 valida o envelope HTTP e um payload em allowlist; não cria endpoint, não acessa banco e não registra o corpo recebido.
+Este documento define o contrato e a implementação local da entrada de leads enviados por sites. A Edge Function valida o envelope HTTP e o payload em allowlist, deriva digests com HMAC-SHA-256 e persiste pelo RPC estreito `public.ingest_site_lead_from_edge(text,text,jsonb)`, que delega ao núcleo `private.ingest_site_lead(bytea,bytea,jsonb)`.
 
-A futura unidade de negócio **não será aceita do cliente**. Ela será derivada exclusivamente da integração autenticada, depois que o schema multiunidade e o vínculo credencial → unidade forem aprovados.
+A unidade de negócio **não é aceita do cliente**. Ela é derivada exclusivamente da integração autenticada persistida no banco pelo vínculo credencial → unidade.
 
 ## Envelope HTTP
 
@@ -16,9 +16,17 @@ A futura unidade de negócio **não será aceita do cliente**. Ela será derivad
 - `Authorization`: obrigatório no formato `Bearer <credencial>` para integrações servidor a servidor. O valor nunca deve aparecer em resposta ou log.
 - `Idempotency-Key`: obrigatório, com 8 a 128 caracteres, após remoção de espaços externos.
 - Corpo máximo: 32 KiB (32.768 bytes). A medição deve ocorrer antes do parse e deve considerar bytes, não quantidade de caracteres.
-- O endpoint futuro deve rejeitar o envelope antes de processar ou persistir o payload.
+- O handler rejeita o envelope antes de processar ou persistir o payload.
 
-O W0 apenas reconhece a presença e o formato do Bearer; autenticação, armazenamento seguro/verificação da credencial, rotação e revogação ficam para uma etapa posterior.
+O Bearer é extraído somente após validação, nunca é logado ou persistido e é transformado em HMAC-SHA-256 com `SITE_LEAD_CREDENTIAL_PEPPER`. A chave de idempotência usa outro domínio criptográfico e incorpora o digest da credencial. Integrações inativas, expiradas ou revogadas são recusadas pelo banco. Rotação operacional e provisionamento da integração real continuam bloqueados até a etapa de implantação.
+
+## Implementação e fronteira de confiança
+
+- `supabase/functions/_shared/site-lead-handler.ts` contém o handler puro e testável. Ele mede os bytes reais do corpo antes do parse, valida o envelope, normaliza o payload e produz respostas sem PII, token, chave ou `event_id`.
+- `supabase/functions/site-lead-webhook/index.ts` é apenas o adaptador Deno/Supabase: exige `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` e `SITE_LEAD_CREDENTIAL_PEPPER`, cria o client com service role e chama o RPC público. A função está com `verify_jwt = false` no `config.toml` porque autentica a credencial opaca da integração no próprio fluxo, em vez de usar um JWT de usuário Supabase.
+- `public.ingest_site_lead_from_edge(text,text,jsonb)` aceita somente dois valores hexadecimais SHA-256 de 64 caracteres e o payload normalizado. É `SECURITY INVOKER`; `PUBLIC`, `anon` e `authenticated` não executam, enquanto `service_role` possui `EXECUTE`.
+- A função interna permanece em `private`, deriva organização e unidade a partir da integração, e mantém criação, duplicidade e conflito transacionais.
+- A resposta pública omite deliberadamente o `event_id` retornado internamente.
 
 ## Payload JSON
 
@@ -71,8 +79,8 @@ Mensagens públicas não devem ecoar valores recebidos nem detalhes internos. Di
 
 ## Modelo de ameaça e controles
 
-- **Segredo exposto:** TLS obrigatório no endpoint futuro; Bearer somente em header; nunca retornar, registrar ou persistir o token em claro; prever hash, rotação e revogação.
-- **Replay:** exigir `Idempotency-Key`; no futuro, combinar janela temporal, vínculo da chave à integração e persistência transacional.
+- **Segredo exposto:** TLS será obrigatório no endpoint implantado; Bearer somente em header; nunca retornar, registrar ou persistir o token em claro; digest HMAC com pepper fora do banco e suporte a revogação no cadastro da integração.
+- **Replay:** exigir `Idempotency-Key`, vinculá-la criptograficamente à integração e persistir idempotência de modo transacional. Janela temporal adicional permanece fora deste gate.
 - **Evento duplicado:** mesma integração e chave devem produzir um único efeito; repetição compatível retorna `200`, e conteúdo incompatível retorna `409`.
 - **Payload excessivo:** recusar acima de 32 KiB antes do parse; impor limites por campo e em `metadata`.
 - **Injeção em texto livre:** tratar todos os textos como dados não confiáveis; não executar, interpolar em SQL, renderizar como HTML ou incluir diretamente em logs.
@@ -80,6 +88,13 @@ Mensagens públicas não devem ecoar valores recebidos nem detalhes internos. Di
 - **Logs com PII:** não registrar corpo bruto, nome, telefone, e-mail, mensagem, consentimento textual, token ou chave de idempotência; usar códigos e contadores sem dados pessoais.
 - **Abuso de formulário público:** sites públicos não devem possuir o segredo servidor a servidor. Usar backend intermediário e, futuramente, rate limit por integração/origem, proteção anti-bot e monitoramento agregado.
 
-## Fora do W0 e próximo gate
+## Validação local e bloqueios
 
-Permanecem bloqueados: persistência, migration, autenticação real, hash/HMAC da credencial, rate limit, RLS, integração → unidade, idempotência transacional, endpoint, deploy e teste E2E. O próximo gate é concluir o diagnóstico agregado, congelar nomes canônicos e criar testes locais do schema multiunidade e das estruturas de integração.
+Foram validados localmente o handler da Edge Function, HMAC com separação de domínio, normalização sem autoridade de tenant, wrapper RPC e seus privilégios, persistência com tenant derivado, idempotência (`created`, `duplicate`, `conflict`) e RLS de leitura. A suíte inclui Vitest e pgTAP; nenhum segredo ou arquivo `.env` foi criado.
+
+Permanecem **BLOQUEADOS** neste gate:
+
+- deploy da Edge Function, migrations ou qualquer alteração em produção/remotos;
+- provisionamento da integração real e distribuição/rotação da credencial e do pepper;
+- rate limit e proteção anti-bot;
+- teste E2E remoto e ativação de tráfego real.

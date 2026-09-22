@@ -137,13 +137,13 @@ Essa ausência é o baseline esperado. Não autoriza criar as estruturas até qu
 | sequência legada de propostas | não medido | Parcial | inventariar antes de criar sequência por unidade | Numeração futura |
 | categoria textual de transação | não medido | Parcial | definir mapeamento para catálogo organizacional | Migração de categoria |
 
-## Inconsistências da especificação a resolver
+## Resoluções e pendências da especificação
 
-1. Escolher nomes canônicos entre `goals`/`dashboard_goals` e `platform_access_grants`/`support_access_grants`.
-2. Congelar a lista exata de tabelas por unidade; a classificação atual aponta nove tabelas operacionais, não apenas uma quantidade genérica.
-3. Definir a estratégia aditiva para `transactions.category_id`, pois o remoto possui apenas `transactions.category` textual.
-4. Incluir explicitamente a sequência e o prefixo de propostas por unidade no plano de compatibilidade.
-5. Garantir que dados bancários residam em `bank_accounts`, ligados a `legal_entities`, sem duplicação no cadastro fiscal.
+1. **Resolvido:** nomes canônicos congelados em `goals` e `platform_access_grants`, conforme o inventário aprovado.
+2. **Pendente:** congelar a lista exata de tabelas por unidade; a classificação atual aponta nove tabelas operacionais, não apenas uma quantidade genérica.
+3. **Pendente para a fase aditiva das tabelas legadas:** definir a estratégia para `transactions.category_id`, pois o remoto possui apenas `transactions.category` textual.
+4. **Resolvido no schema de fundação:** `proposal_sequences` inclui sequência e prefixo por unidade; a integração com `proposals` continua em fase posterior.
+5. **Resolvido no schema de fundação:** dados bancários residem em `bank_accounts`, ligados a `legal_entities`, com associação explícita às unidades.
 
 ## Classificação final
 

@@ -1,5 +1,7 @@
 # Site Lead Webhook W0 Implementation Plan
 
+> **STATUS: SUPERSEDED em 2026-09-21.** Este documento preserva o gate inicial sem persistência. O gate seguinte implementou localmente a Edge Function, HMAC, persistência transacional, idempotência e RLS em `20260921120000_multiunit_foundation_and_site_lead_inbox.sql`. Deploy, migration remota, credenciais reais, rate limit e tráfego real continuam bloqueados.
+
 > **For Hermes:** Use subagent-driven-development skill to implement this plan task-by-task.
 
 **Goal:** Preparar e testar localmente o contrato seguro do webhook de entrada de leads de sites, sem banco, migration, deploy ou produção.

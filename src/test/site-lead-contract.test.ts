@@ -117,6 +117,15 @@ describe("site lead payload contract", () => {
     ).toThrow();
   });
 
+  it.each(["organization_id", "Organization_ID", "BUSINESS_UNIT_ID", "tenant_id"])(
+    "rejects tenant identifier %s in metadata case-insensitively",
+    (key) => {
+      expect(() =>
+        parseSiteLeadPayload({ ...validPayload, metadata: { [key]: "forged" } }),
+      ).toThrow();
+    },
+  );
+
   it("validates consent and ISO-8601 instants with timezone", () => {
     const result = parseSiteLeadPayload({
       ...validPayload,

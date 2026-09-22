@@ -318,9 +318,9 @@ select has_table('public', 'business_unit_members');
 select has_table('public', 'bank_accounts');
 select has_table('public', 'bank_account_business_units');
 select has_table('public', 'proposal_sequences');
-select has_table('public', 'dashboard_goals');
+select has_table('public', 'goals');
 select has_table('public', 'platform_admins');
-select has_table('public', 'support_access_grants');
+select has_table('public', 'platform_access_grants');
 select enum_has_labels('public', 'app_role', array['proprietario','administrador','comercial','operacao','financeiro','leitura']);
 
 select * from finish();

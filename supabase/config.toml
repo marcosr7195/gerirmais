@@ -2,3 +2,8 @@ project_id = "cnoqjiucrecktwsbhqts"
 
 [functions.kiwify-webhook]
 verify_jwt = false
+
+# This endpoint authenticates an integration Bearer in the handler/database;
+# Supabase Auth JWT verification would reject that opaque credential first.
+[functions.site-lead-webhook]
+verify_jwt = false
