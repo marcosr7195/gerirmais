@@ -6,6 +6,13 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
+function json(body: Record<string, unknown>, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
 // Mapeamento por nome do produto Kiwify → plano interno
 function detectPlan(productName: string | undefined | null): "starter" | "pro" | "scale" | null {
   if (!productName) return null;
@@ -46,13 +53,40 @@ function pickEvent(payload: any): string {
   ).toString().toLowerCase();
 }
 
+// Busca paginada do usuário por e-mail (funciona com qualquer volume de usuários)
+async function findUserIdByEmail(supabase: any, email: string): Promise<string | null> {
+  const target = email.toLowerCase();
+  const perPage = 1000;
+  for (let page = 1; page <= 50; page++) {
+    const { data, error } = await supabase.auth.admin.listUsers({ page, perPage });
+    if (error) throw error;
+    const found = data.users.find((u: any) => u.email?.toLowerCase() === target);
+    if (found) return found.id;
+    if (data.users.length < perPage) return null;
+  }
+  return null;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   if (req.method !== "POST") {
-    return new Response(JSON.stringify({ error: "Method not allowed" }), {
-      status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return json({ ok: false }, 405);
+  }
+
+  // 1) Autenticidade: token do webhook Kiwify (query param ou header)
+  const expectedToken = Deno.env.get("KIWIFY_WEBHOOK_TOKEN");
+  if (!expectedToken) {
+    console.error("KIWIFY_WEBHOOK_TOKEN não configurado");
+    return json({ ok: false }, 500);
+  }
+  const url = new URL(req.url);
+  const providedToken =
+    url.searchParams.get("token") ??
+    req.headers.get("x-kiwify-token") ??
+    req.headers.get("x-webhook-token");
+  if (!providedToken || providedToken !== expectedToken) {
+    return json({ ok: false }, 401);
   }
 
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -63,38 +97,31 @@ Deno.serve(async (req) => {
   try {
     payload = await req.json();
   } catch {
-    return new Response(JSON.stringify({ error: "Invalid JSON" }), {
-      status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
-
-  console.log("Kiwify webhook received:", JSON.stringify(payload).slice(0, 500));
-
-  const email = pickEmail(payload);
-  if (!email) {
-    return new Response(JSON.stringify({ error: "Missing customer email" }), {
-      status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return json({ ok: false }, 400);
   }
 
   const event = pickEvent(payload);
+  // Log mínimo: apenas o tipo do evento, sem payload nem dados do cliente
+  console.log("Kiwify webhook event:", event || "unknown");
+
+  const email = pickEmail(payload);
+  if (!email) {
+    return json({ ok: false }, 400);
+  }
+
   const productName = pickProductName(payload);
   const plan = detectPlan(productName);
 
-  // Find user by email via auth admin
-  const { data: usersList, error: listErr } = await supabase.auth.admin.listUsers();
-  if (listErr) {
-    console.error("Failed to list users:", listErr);
-    return new Response(JSON.stringify({ error: "User lookup failed" }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+  // 2) Busca paginada por e-mail
+  let userId: string | null;
+  try {
+    userId = await findUserIdByEmail(supabase, email);
+  } catch (e) {
+    console.error("User lookup failed:", e);
+    return json({ ok: false }, 500);
   }
-  const user = usersList.users.find((u) => u.email?.toLowerCase() === email.toLowerCase());
-  if (!user) {
-    console.warn("No user found for email:", email);
-    return new Response(JSON.stringify({ error: "User not found", email }), {
-      status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+  if (!userId) {
+    return json({ ok: false }, 404);
   }
 
   const now = new Date();
@@ -109,9 +136,7 @@ Deno.serve(async (req) => {
     event === "subscription_renewed"
   ) {
     if (!plan) {
-      return new Response(JSON.stringify({ error: "Could not detect plan from product", productName }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return json({ ok: false }, 400);
     }
     const next = new Date(now);
     next.setDate(next.getDate() + 31); // padrão mensal +1d tolerância
@@ -144,25 +169,18 @@ Deno.serve(async (req) => {
     grace.setDate(grace.getDate() + 3);
     updates = { ...updates, status_assinatura: "atrasado", data_vencimento: grace.toISOString() };
   } else {
-    console.log("Unhandled event:", event);
-    return new Response(JSON.stringify({ ok: true, ignored: true, event }), {
-      status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return json({ ok: true, ignored: true });
   }
 
   const { error: updErr } = await supabase
     .from("profiles")
     .update(updates)
-    .eq("user_id", user.id);
+    .eq("user_id", userId);
 
   if (updErr) {
-    console.error("Profile update failed:", updErr);
-    return new Response(JSON.stringify({ error: "Update failed", details: updErr.message }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    console.error("Profile update failed:", updErr.message);
+    return json({ ok: false }, 500);
   }
 
-  return new Response(JSON.stringify({ ok: true, user_id: user.id, applied: updates }), {
-    status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
+  return json({ ok: true });
 });
