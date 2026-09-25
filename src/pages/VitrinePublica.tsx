@@ -10,6 +10,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import TurnstileWidget from "@/components/vitrine/TurnstileWidget";
+
+const FN_URL = `https://${import.meta.env.VITE_SUPABASE_PROJECT_ID}.supabase.co/functions/v1/vitrine-lead`;
 
 interface PublicItem {
   id: string;
@@ -65,12 +68,24 @@ export default function VitrinePublica() {
   const [sent, setSent] = useState(false);
   const [duplicate, setDuplicate] = useState(false);
   const [form, setForm] = useState({ name: "", phone: "", email: "", message: "", bestTime: "" });
+  const [siteKey, setSiteKey] = useState<string | null>(null);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaKey, setCaptchaKey] = useState(0);
+
+  useEffect(() => {
+    fetch(`${FN_URL}`, { headers: { apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY } })
+      .then((r) => r.json())
+      .then((d) => setSiteKey(d?.siteKey ?? null))
+      .catch(() => setSiteKey(null));
+  }, []);
 
   const openLead = (item: PublicItem) => {
     setLeadItem(item);
     setSent(false);
     setDuplicate(false);
     setSending(false);
+    setCaptchaToken(null);
+    setCaptchaKey((k) => k + 1);
     setForm({ name: "", phone: "", email: "", message: "", bestTime: "" });
   };
 
@@ -85,19 +100,36 @@ export default function VitrinePublica() {
       toast.error("Informe um WhatsApp válido com DDD.");
       return;
     }
+    if (!captchaToken) {
+      toast.error("Confirme a verificação de segurança.");
+      return;
+    }
     setSending(true);
-    const { data, error } = await (supabase as any).rpc("create_vitrine_lead", {
-      p_slug: slug,
-      p_item_id: leadItem.id,
-      p_name: form.name.trim(),
-      p_phone: form.phone,
-      p_email: form.email.trim() || null,
-      p_message: form.message.trim() || null,
-      p_best_time: form.bestTime.trim() || null,
-    });
+    let data: any = null;
+    try {
+      const res = await fetch(FN_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
+        body: JSON.stringify({
+          token: captchaToken,
+          slug,
+          item_id: leadItem.id,
+          name: form.name.trim(),
+          phone: form.phone,
+          email: form.email.trim() || null,
+          message: form.message.trim() || null,
+          best_time: form.bestTime.trim() || null,
+        }),
+      });
+      data = await res.json().catch(() => null);
+    } catch {
+      data = null;
+    }
     setSending(false);
-    if (error || !data?.success) {
+    if (!data?.success) {
       toast.error(data?.message || "Não foi possível enviar agora. Tente novamente.");
+      setCaptchaToken(null);
+      setCaptchaKey((k) => k + 1);
       return;
     }
     setDuplicate(!!data?.duplicate);
@@ -296,7 +328,8 @@ export default function VitrinePublica() {
                 <Label htmlFor="lead-msg">Mensagem</Label>
                 <Textarea id="lead-msg" rows={3} value={form.message} maxLength={1000} onChange={(e) => setForm({ ...form, message: e.target.value })} placeholder="opcional" />
               </div>
-              <Button type="submit" className="w-full" disabled={sending}>
+              {siteKey && <TurnstileWidget key={captchaKey} siteKey={siteKey} onToken={setCaptchaToken} />}
+              <Button type="submit" className="w-full" disabled={sending || !captchaToken}>
                 {sending ? <><Loader2 className="h-4 w-4 animate-spin" /> Enviando...</> : "Enviar interesse"}
               </Button>
               {whatsappDigits && (
