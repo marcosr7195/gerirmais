@@ -14,6 +14,41 @@ export type Database = {
   }
   public: {
     Tables: {
+      business_units: {
+        Row: {
+          cnpj: string | null
+          created_at: string
+          id: string
+          name: string
+          org_id: string
+          tipo: string
+        }
+        Insert: {
+          cnpj?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          org_id: string
+          tipo?: string
+        }
+        Update: {
+          cnpj?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          org_id?: string
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_units_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categories: {
         Row: {
           classification: string
@@ -49,6 +84,7 @@ export type Database = {
           id: string
           service_order_id: string
           title: string
+          unit_id: string | null
           user_id: string
         }
         Insert: {
@@ -58,6 +94,7 @@ export type Database = {
           id?: string
           service_order_id: string
           title: string
+          unit_id?: string | null
           user_id: string
         }
         Update: {
@@ -67,6 +104,7 @@ export type Database = {
           id?: string
           service_order_id?: string
           title?: string
+          unit_id?: string | null
           user_id?: string
         }
         Relationships: [
@@ -75,6 +113,13 @@ export type Database = {
             columns: ["service_order_id"]
             isOneToOne: false
             referencedRelation: "service_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_items_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "business_units"
             referencedColumns: ["id"]
           },
         ]
@@ -161,6 +206,7 @@ export type Database = {
           state: string | null
           street: string | null
           trade_name: string | null
+          unit_id: string | null
           updated_at: string | null
           user_id: string
           website: string | null
@@ -185,6 +231,7 @@ export type Database = {
           state?: string | null
           street?: string | null
           trade_name?: string | null
+          unit_id?: string | null
           updated_at?: string | null
           user_id: string
           website?: string | null
@@ -209,12 +256,21 @@ export type Database = {
           state?: string | null
           street?: string | null
           trade_name?: string | null
+          unit_id?: string | null
           updated_at?: string | null
           user_id?: string
           website?: string | null
           zip_code?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "clients_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "business_units"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       credit_card_installments: {
         Row: {
@@ -409,6 +465,7 @@ export type Database = {
           os_created: boolean
           stage: string
           title: string
+          unit_id: string | null
           updated_at: string | null
           user_id: string
           value: number | null
@@ -424,6 +481,7 @@ export type Database = {
           os_created?: boolean
           stage?: string
           title: string
+          unit_id?: string | null
           updated_at?: string | null
           user_id: string
           value?: number | null
@@ -439,6 +497,7 @@ export type Database = {
           os_created?: boolean
           stage?: string
           title?: string
+          unit_id?: string | null
           updated_at?: string | null
           user_id?: string
           value?: number | null
@@ -449,6 +508,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deals_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "business_units"
             referencedColumns: ["id"]
           },
         ]
@@ -528,11 +594,65 @@ export type Database = {
         }
         Relationships: []
       }
+      fiscal_entities: {
+        Row: {
+          cnpj: string | null
+          id: string
+          razao_social: string | null
+          regime_tributario: string | null
+          unit_id: string
+        }
+        Insert: {
+          cnpj?: string | null
+          id?: string
+          razao_social?: string | null
+          regime_tributario?: string | null
+          unit_id: string
+        }
+        Update: {
+          cnpj?: string | null
+          id?: string
+          razao_social?: string | null
+          regime_tributario?: string | null
+          unit_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fiscal_entities_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "business_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organizations: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          owner_user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          owner_user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          owner_user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           account_holder: string | null
           account_number: string | null
           account_type: string | null
+          active_unit_id: string | null
           agency: string | null
           bank_name: string | null
           business_name: string | null
@@ -573,6 +693,7 @@ export type Database = {
           account_holder?: string | null
           account_number?: string | null
           account_type?: string | null
+          active_unit_id?: string | null
           agency?: string | null
           bank_name?: string | null
           business_name?: string | null
@@ -613,6 +734,7 @@ export type Database = {
           account_holder?: string | null
           account_number?: string | null
           account_type?: string | null
+          active_unit_id?: string | null
           agency?: string | null
           bank_name?: string | null
           business_name?: string | null
@@ -649,7 +771,15 @@ export type Database = {
           whatsapp?: string | null
           zip_code?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_active_unit_id_fkey"
+            columns: ["active_unit_id"]
+            isOneToOne: false
+            referencedRelation: "business_units"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       proposals: {
         Row: {
@@ -745,6 +875,7 @@ export type Database = {
           id: string
           status: string
           title: string
+          unit_id: string | null
           updated_at: string | null
           user_id: string
         }
@@ -757,6 +888,7 @@ export type Database = {
           id?: string
           status?: string
           title: string
+          unit_id?: string | null
           updated_at?: string | null
           user_id: string
         }
@@ -769,6 +901,7 @@ export type Database = {
           id?: string
           status?: string
           title?: string
+          unit_id?: string | null
           updated_at?: string | null
           user_id?: string
         }
@@ -787,6 +920,13 @@ export type Database = {
             referencedRelation: "deals"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "service_orders_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "business_units"
+            referencedColumns: ["id"]
+          },
         ]
       }
       transactions: {
@@ -802,6 +942,7 @@ export type Database = {
           service_order_id: string | null
           status: string | null
           type: string
+          unit_id: string | null
           updated_at: string | null
           user_id: string
         }
@@ -817,6 +958,7 @@ export type Database = {
           service_order_id?: string | null
           status?: string | null
           type: string
+          unit_id?: string | null
           updated_at?: string | null
           user_id: string
         }
@@ -832,6 +974,7 @@ export type Database = {
           service_order_id?: string | null
           status?: string | null
           type?: string
+          unit_id?: string | null
           updated_at?: string | null
           user_id?: string
         }
@@ -841,6 +984,13 @@ export type Database = {
             columns: ["service_order_id"]
             isOneToOne: false
             referencedRelation: "service_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "business_units"
             referencedColumns: ["id"]
           },
         ]
@@ -919,6 +1069,8 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_access_unit: { Args: { _unit: string }; Returns: boolean }
+      create_default_unit: { Args: { _user: string }; Returns: string }
       create_vitrine_lead: {
         Args: {
           p_best_time?: string
@@ -931,6 +1083,7 @@ export type Database = {
         }
         Returns: Json
       }
+      current_unit_id: { Args: never; Returns: string }
       get_vitrine_by_slug: { Args: { p_slug: string }; Returns: Json }
     }
     Enums: {
