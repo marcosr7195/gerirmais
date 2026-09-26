@@ -9,6 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
+import { TeamSettings } from "@/components/TeamSettings";
+import { canManageTeam, canSeeFinancialSettings } from "@/lib/permissions";
 import { Save, Upload, Building2, User, FileText, Phone, MapPin, Landmark } from "lucide-react";
 
 const phoneMask = (v: string) => {
@@ -42,7 +44,7 @@ const cepMask = (v: string) => {
 };
 
 export default function Configuracoes() {
-  const { user, profile, refreshProfile } = useAuth();
+  const { user, profile, refreshProfile, unitRole } = useAuth();
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
 
@@ -368,8 +370,10 @@ export default function Configuracoes() {
         </CardContent>
       </Card>
 
+      {canManageTeam(unitRole) && <TeamSettings />}
+
       {/* Dados Bancários */}
-      <Card>
+      {canSeeFinancialSettings(unitRole) && <Card>
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2"><Landmark className="h-5 w-5" /> Dados Bancários para Proposta</CardTitle>
         </CardHeader>
@@ -409,7 +413,7 @@ export default function Configuracoes() {
             <Input value={form.account_holder} onChange={(e) => set("account_holder", e.target.value)} placeholder="Nome completo do titular" />
           </div>
         </CardContent>
-      </Card>
+      </Card>}
 
       <div className="flex justify-end pb-6">
         <Button onClick={handleSave} disabled={saving} size="lg">

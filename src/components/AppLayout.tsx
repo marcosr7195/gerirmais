@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import { TrialBanner } from "./TrialBanner";
+import { ReadOnlyGuard } from "./ReadOnlyGuard";
 
 export function AppLayout({ children }: { children: ReactNode }) {
   return (
@@ -14,7 +15,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
             <SidebarTrigger />
           </header>
           <main className="flex-1 p-4 md:p-6 overflow-auto">
-            {children}
+            <ReadOnlyGuard>{children}</ReadOnlyGuard>
           </main>
         </div>
       </div>
