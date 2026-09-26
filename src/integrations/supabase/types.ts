@@ -688,6 +688,7 @@ export type Database = {
           fiscal_type: string | null
           id: string
           instagram: string | null
+          invited_signup: boolean
           logo_url: string | null
           neighborhood: string | null
           number: string | null
@@ -703,6 +704,7 @@ export type Database = {
           state: string | null
           status_assinatura: string
           street: string | null
+          trial_used: boolean
           updated_at: string | null
           user_id: string
           website: string | null
@@ -729,6 +731,7 @@ export type Database = {
           fiscal_type?: string | null
           id?: string
           instagram?: string | null
+          invited_signup?: boolean
           logo_url?: string | null
           neighborhood?: string | null
           number?: string | null
@@ -744,6 +747,7 @@ export type Database = {
           state?: string | null
           status_assinatura?: string
           street?: string | null
+          trial_used?: boolean
           updated_at?: string | null
           user_id: string
           website?: string | null
@@ -770,6 +774,7 @@ export type Database = {
           fiscal_type?: string | null
           id?: string
           instagram?: string | null
+          invited_signup?: boolean
           logo_url?: string | null
           neighborhood?: string | null
           number?: string | null
@@ -785,6 +790,7 @@ export type Database = {
           state?: string | null
           status_assinatura?: string
           street?: string | null
+          trial_used?: boolean
           updated_at?: string | null
           user_id?: string
           website?: string | null
@@ -1146,9 +1152,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_my_pending_invite: { Args: never; Returns: Json }
       accept_unit_invite: { Args: { p_token: string }; Returns: Json }
       can_access_unit: { Args: { _unit: string }; Returns: boolean }
       create_default_unit: { Args: { _user: string }; Returns: string }
+      create_my_business: {
+        Args: { p_document?: string; p_name: string; p_service_type: string }
+        Returns: Json
+      }
       create_vitrine_lead: {
         Args: {
           p_best_time?: string
@@ -1163,12 +1174,22 @@ export type Database = {
       }
       current_unit_id: { Args: never; Returns: string }
       current_unit_owner: { Args: never; Returns: string }
+      current_unit_plan: { Args: never; Returns: Json }
       current_unit_role: { Args: never; Returns: string }
       get_invite_preview: { Args: { p_token: string }; Returns: Json }
       get_vitrine_by_slug: { Args: { p_slug: string }; Returns: Json }
       invite_unit_member: {
         Args: { p_email: string; p_role: string }
         Returns: string
+      }
+      list_my_units: {
+        Args: never
+        Returns: {
+          is_owner: boolean
+          name: string
+          role: string
+          unit_id: string
+        }[]
       }
       list_unit_members: {
         Args: never
@@ -1185,6 +1206,7 @@ export type Database = {
         }[]
       }
       remove_unit_member: { Args: { p_member: string }; Returns: undefined }
+      switch_active_unit: { Args: { p_unit: string }; Returns: undefined }
       unit_role: { Args: { _unit: string }; Returns: string }
       update_unit_member_role: {
         Args: { p_member: string; p_role: string }
