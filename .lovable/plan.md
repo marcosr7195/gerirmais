@@ -16,8 +16,13 @@
    - O token fica guardado no navegador; o link de confirmação volta para `/convite/:token`, e só depois de confirmado e logado o convite é aceito e a pessoa é vinculada à unidade.
    - Nova função no banco `get_invite_preview(token)` (retorna só e-mail mascarado/completo do convidado e nome da unidade, se válido e não expirado).
 
+5. **E-mail próprio @gerirmais.com.br** (não precisa de SMTP manual):
+   - Você clica em "Configurar domínio de e-mail" e escolhe gerirmais.com.br (usaremos um subdomínio, ex.: notify.gerirmais.com.br, para não afetar seus e-mails atuais).
+   - Você adiciona no seu provedor de DNS os registros mostrados (tipo NS). A verificação pode levar até 72h.
+   - Eu crio os modelos de e-mail (confirmação de cadastro, redefinição de senha, convite etc.) com logo e cores do Gerir+, em português, e ativo o envio.
+   - Até a verificação terminar, os e-mails continuam saindo pelo remetente padrão, sem interrupção.
+
 ## Fora do escopo
-- E-mails com a marca Gerir+ (exige domínio de e-mail; posso fazer em seguida).
 - Convite enviado automaticamente por e-mail (segue copiar link/mailto).
 
 ## Detalhes técnicos
