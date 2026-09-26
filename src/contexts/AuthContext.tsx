@@ -39,13 +39,17 @@ interface Profile {
   data_vencimento: string | null;
   origem: string | null;
   slug: string | null;
+  active_unit_id: string | null;
 }
+
+export type UnitRole = "owner" | "manager" | "collaborator" | "viewer";
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   profile: Profile | null;
   loading: boolean;
+  unitRole: UnitRole | null;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -57,6 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [unitRole, setUnitRole] = useState<UnitRole | null>(null);
 
   const fetchProfile = async (userId: string) => {
     const { data } = await supabase
@@ -65,6 +70,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .eq("user_id", userId)
       .single();
     setProfile(data as Profile | null);
+    const { data: role } = await supabase.rpc("current_unit_role" as any);
+    setUnitRole(((role as string) || "owner") as UnitRole);
   };
 
   const refreshProfile = async () => {
@@ -100,10 +107,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     setSession(null);
     setProfile(null);
+    setUnitRole(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, profile, loading, signOut, refreshProfile }}>
+    <AuthContext.Provider value={{ user, session, profile, loading, unitRole, signOut, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );
