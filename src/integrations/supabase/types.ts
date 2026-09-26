@@ -139,6 +139,7 @@ export type Database = {
           reminder_date: string | null
           subject: string | null
           summary: string | null
+          unit_id: string | null
           updated_at: string
           user_id: string
         }
@@ -156,6 +157,7 @@ export type Database = {
           reminder_date?: string | null
           subject?: string | null
           summary?: string | null
+          unit_id?: string | null
           updated_at?: string
           user_id: string
         }
@@ -173,6 +175,7 @@ export type Database = {
           reminder_date?: string | null
           subject?: string | null
           summary?: string | null
+          unit_id?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -182,6 +185,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_interactions_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "business_units"
             referencedColumns: ["id"]
           },
         ]
@@ -422,6 +432,7 @@ export type Database = {
           description: string
           id: string
           quantity: number | null
+          unit_id: string | null
           unit_price: number | null
           user_id: string
         }
@@ -431,6 +442,7 @@ export type Database = {
           description: string
           id?: string
           quantity?: number | null
+          unit_id?: string | null
           unit_price?: number | null
           user_id: string
         }
@@ -440,6 +452,7 @@ export type Database = {
           description?: string
           id?: string
           quantity?: number | null
+          unit_id?: string | null
           unit_price?: number | null
           user_id?: string
         }
@@ -449,6 +462,13 @@ export type Database = {
             columns: ["deal_id"]
             isOneToOne: false
             referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deal_items_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "business_units"
             referencedColumns: ["id"]
           },
         ]
@@ -801,6 +821,7 @@ export type Database = {
           payment_method: string | null
           proposal_number: string
           total_value: number | null
+          unit_id: string | null
           user_id: string
           validity_date: string
         }
@@ -823,6 +844,7 @@ export type Database = {
           payment_method?: string | null
           proposal_number: string
           total_value?: number | null
+          unit_id?: string | null
           user_id: string
           validity_date: string
         }
@@ -845,6 +867,7 @@ export type Database = {
           payment_method?: string | null
           proposal_number?: string
           total_value?: number | null
+          unit_id?: string | null
           user_id?: string
           validity_date?: string
         }
@@ -861,6 +884,13 @@ export type Database = {
             columns: ["deal_id"]
             isOneToOne: false
             referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proposals_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "business_units"
             referencedColumns: ["id"]
           },
         ]
@@ -995,6 +1025,53 @@ export type Database = {
           },
         ]
       }
+      unit_members: {
+        Row: {
+          accepted_at: string | null
+          created_at: string
+          email: string | null
+          expires_at: string | null
+          id: string
+          invite_token: string | null
+          invited_by: string | null
+          role: string
+          unit_id: string
+          user_id: string | null
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string
+          email?: string | null
+          expires_at?: string | null
+          id?: string
+          invite_token?: string | null
+          invited_by?: string | null
+          role: string
+          unit_id: string
+          user_id?: string | null
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string
+          email?: string | null
+          expires_at?: string | null
+          id?: string
+          invite_token?: string | null
+          invited_by?: string | null
+          role?: string
+          unit_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "unit_members_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "business_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vitrine_items: {
         Row: {
           category: string
@@ -1069,6 +1146,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_unit_invite: { Args: { p_token: string }; Returns: Json }
       can_access_unit: { Args: { _unit: string }; Returns: boolean }
       create_default_unit: { Args: { _user: string }; Returns: string }
       create_vitrine_lead: {
@@ -1084,7 +1162,33 @@ export type Database = {
         Returns: Json
       }
       current_unit_id: { Args: never; Returns: string }
+      current_unit_owner: { Args: never; Returns: string }
+      current_unit_role: { Args: never; Returns: string }
       get_vitrine_by_slug: { Args: { p_slug: string }; Returns: Json }
+      invite_unit_member: {
+        Args: { p_email: string; p_role: string }
+        Returns: string
+      }
+      list_unit_members: {
+        Args: never
+        Returns: {
+          accepted_at: string
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          invite_token: string
+          name: string
+          role: string
+          user_id: string
+        }[]
+      }
+      remove_unit_member: { Args: { p_member: string }; Returns: undefined }
+      unit_role: { Args: { _unit: string }; Returns: string }
+      update_unit_member_role: {
+        Args: { p_member: string; p_role: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

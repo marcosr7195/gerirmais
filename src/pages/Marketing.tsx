@@ -163,7 +163,7 @@ export default function Marketing() {
       const { data: clientsData } = await supabase
         .from("clients")
         .select("id, name, origin, created_at")
-        .eq("user_id", user.id)
+        
         .order("created_at", { ascending: false });
       const ids = (clientsData || []).map((c) => c.id);
       let deals: any[] = [];
@@ -171,7 +171,7 @@ export default function Marketing() {
         const { data: dealsData } = await supabase
           .from("deals")
           .select("client_id, stage, value, created_at, archived_at")
-          .eq("user_id", user.id)
+          
           .in("client_id", ids)
           .is("archived_at", null)
           .neq("stage", "perdido");

@@ -23,6 +23,8 @@ import NotFound from "./pages/NotFound";
 import Admin from "./pages/Admin";
 import Termos from "./pages/Termos";
 import Privacidade from "./pages/Privacidade";
+import Convite, { PENDING_INVITE_KEY } from "./pages/Convite";
+import { RequireModule } from "@/components/RequireModule";
 
 const queryClient = new QueryClient();
 
@@ -46,7 +48,16 @@ function AppRoutes() {
         <Route path="/privacidade" element={<Privacidade />} />
         <Route path="/vitrine/:slug" element={<VitrinePublica />} />
         <Route path="/auth" element={<Auth />} />
+        <Route path="/convite/:token" element={<Convite />} />
         <Route path="*" element={<Auth />} />
+      </Routes>
+    );
+  }
+  if (window.location.pathname.startsWith("/convite/") || localStorage.getItem(PENDING_INVITE_KEY)) {
+    return (
+      <Routes>
+        <Route path="/convite/:token" element={<Convite />} />
+        <Route path="*" element={<Convite />} />
       </Routes>
     );
   }
@@ -57,16 +68,16 @@ function AppRoutes() {
       <Routes>
         <Route path="/vitrine/:slug" element={<VitrinePublica />} />
         <Route path="/inicio" element={<Inicio />} />
-        <Route path="/" element={<Dashboard />} />
+        <Route path="/" element={<RequireModule module="dashboard"><Dashboard /></RequireModule>} />
         <Route path="/auth" element={<Navigate to="/" replace />} />
-        <Route path="/financas" element={<Financas />} />
+        <Route path="/financas" element={<RequireModule module="financas"><Financas /></RequireModule>} />
         <Route path="/financas-pessoal" element={<FinancasPessoal />} />
         <Route path="/cartoes" element={<CartoesCredito />} />
-        <Route path="/vendas" element={<Vendas />} />
-        <Route path="/entregas" element={<Entregas />} />
-        <Route path="/vitrine" element={<Vitrine />} />
-        <Route path="/marketing" element={<Marketing />} />
-        <Route path="/configuracoes" element={<Configuracoes />} />
+        <Route path="/vendas" element={<RequireModule module="vendas"><Vendas /></RequireModule>} />
+        <Route path="/entregas" element={<RequireModule module="entregas"><Entregas /></RequireModule>} />
+        <Route path="/vitrine" element={<RequireModule module="vitrine"><Vitrine /></RequireModule>} />
+        <Route path="/marketing" element={<RequireModule module="marketing"><Marketing /></RequireModule>} />
+        <Route path="/configuracoes" element={<RequireModule module="configuracoes"><Configuracoes /></RequireModule>} />
         <Route path="/planos" element={<Planos />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/termos" element={<Termos />} />

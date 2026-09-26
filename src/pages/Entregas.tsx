@@ -97,7 +97,7 @@ export default function Entregas() {
     const { data } = await supabase
       .from("service_orders")
       .select("*, clients(name, trade_name, phone, email), deals(value, title, notes)")
-      .eq("user_id", user.id)
+      
       .order("created_at", { ascending: false });
 
     const osData = (data || []) as ServiceOrder[];
@@ -139,7 +139,7 @@ export default function Entregas() {
 
   const loadClients = async () => {
     if (!user) return;
-    const { data } = await supabase.from("clients").select("id, name").eq("user_id", user.id);
+    const { data } = await supabase.from("clients").select("id, name");
     setClients(data || []);
   };
 

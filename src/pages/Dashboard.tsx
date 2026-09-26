@@ -146,31 +146,31 @@ export default function Dashboard() {
       vitrineRes,
       newLeadsRes,
     ] = await Promise.all([
-      supabase.from("transactions").select("*").eq("user_id", user.id),
+      supabase.from("transactions").select("*"),
       supabase
         .from("proposals")
         .select("id", { count: "exact", head: true })
-        .eq("user_id", user.id),
+        ,
       supabase
         .from("service_orders")
         .select("id")
-        .eq("user_id", user.id)
+        
         .eq("due_date", today)
         .in("status", ["em_andamento", "atrasado"]),
       supabase
         .from("service_orders")
         .select("id, title, due_date, status, client_id")
-        .eq("user_id", user.id)
+        
         .in("status", ["em_andamento", "atrasado"]),
       supabase
         .from("deals")
         .select("id, title, stage, updated_at, archived_at")
-        .eq("user_id", user.id)
+        
         .is("archived_at", null),
       supabase
         .from("transactions")
         .select("id, description, amount, due_date")
-        .eq("user_id", user.id)
+        
         .eq("type", "despesa")
         .in("status", ["pendente"])
         .gte("due_date", today)
@@ -179,7 +179,7 @@ export default function Dashboard() {
       supabase
         .from("deals")
         .select("id, value, archived_at")
-        .eq("user_id", user.id)
+        
         .not("archived_at", "is", null),
       supabase
         .from("vitrine_items")
@@ -191,7 +191,7 @@ export default function Dashboard() {
       supabase
         .from("deals")
         .select("id, stage, closed_at, archived_at")
-        .eq("user_id", user.id)
+        
         .gte("created_at", monthStart)
         .is("archived_at", null)
         .neq("stage", "perdido"),
@@ -255,7 +255,7 @@ export default function Dashboard() {
         ? supabase
             .from("checklist_items")
             .select("id, title, due_date, completed, service_order_id")
-            .eq("user_id", user.id)
+            
             .in("service_order_id", osIds)
             .eq("completed", false)
         : Promise.resolve({ data: [] as any[] }),
@@ -263,7 +263,7 @@ export default function Dashboard() {
         ? supabase
             .from("clients")
             .select("id, name")
-            .eq("user_id", user.id)
+            
             .in("id", clientIds)
         : Promise.resolve({ data: [] as any[] }),
     ]);

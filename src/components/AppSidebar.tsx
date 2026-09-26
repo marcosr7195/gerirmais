@@ -3,6 +3,7 @@ import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
+import { canSeeModule, ROUTE_MODULES, ROLE_LABELS } from "@/lib/permissions";
 import { Separator } from "@/components/ui/separator";
 import logoCompletaAsset from "@/assets/logo-gerirmais-oficial.png.asset.json";
 import iconGAsset from "@/assets/icon-gerirmais.png.asset.json";
@@ -95,7 +96,8 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
-  const { signOut, profile, user } = useAuth();
+  const { signOut, profile, user, unitRole } = useAuth();
+  const visibleBusiness = businessItems.filter((i) => canSeeModule(unitRole, ROUTE_MODULES[i.url]));
   const isAdmin = user?.email?.toLowerCase() === "marcos7195@gmail.com";
 
   return (
@@ -108,7 +110,7 @@ export function AppSidebar() {
             ) : (
               <div className="min-w-0 flex-1">
                 <img src={logoCompletaAsset.url} alt="Gerir+" className="h-10 w-auto object-contain" />
-                <p className="text-sidebar-foreground/60 text-xs truncate mt-1">{profile?.business_name || "Meu Negócio"}</p>
+                <p className="text-sidebar-foreground/60 text-xs truncate mt-1">{profile?.business_name || "Meu Negócio"}{unitRole && unitRole !== "owner" ? ` · ${ROLE_LABELS[unitRole]}` : ""}</p>
               </div>
             )}
           </div>
@@ -117,7 +119,7 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarSectionHeader title="Meu Negócio" icon={Briefcase} collapsed={collapsed} />
-              {businessItems.map((item) => (
+              {visibleBusiness.map((item) => (
                 <SidebarItem key={item.title} item={item} collapsed={collapsed} />
               ))}
 
@@ -133,7 +135,7 @@ export function AppSidebar() {
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>
-          <SidebarMenuItem>
+          {canSeeModule(unitRole, "configuracoes") && <SidebarMenuItem>
             <SidebarMenuButton asChild>
               <NavLink
                 to="/configuracoes"
@@ -144,7 +146,7 @@ export function AppSidebar() {
                 {!collapsed && <span>Configurações</span>}
               </NavLink>
             </SidebarMenuButton>
-          </SidebarMenuItem>
+          </SidebarMenuItem>}
           {isAdmin && (
             <SidebarMenuItem>
               <SidebarMenuButton asChild>

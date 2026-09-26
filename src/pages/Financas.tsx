@@ -100,12 +100,12 @@ export default function Financas() {
   }, []);
 
   const load = async () => {
-    const { data } = await supabase.from("transactions").select("*").eq("user_id", user!.id).order("date", { ascending: false });
+    const { data } = await supabase.from("transactions").select("*").order("date", { ascending: false });
     setTransactions((data || []).map(t => ({ ...t, amount: Number(t.amount) })));
   };
 
   const loadCategories = async () => {
-    const { data } = await supabase.from("categories").select("*").eq("user_id", user!.id).order("name");
+    const { data } = await supabase.from("categories").select("*").order("name");
     const cats = data || [];
     if (cats.length === 0 && user) {
       const defaults = [
@@ -130,7 +130,7 @@ export default function Financas() {
         { name: "Investimento", type: "despesa", classification: "despesa_operacional" },
       ];
       await supabase.from("categories").insert(defaults.map(d => ({ ...d, user_id: user.id })));
-      const { data: seeded } = await supabase.from("categories").select("*").eq("user_id", user.id).order("name");
+      const { data: seeded } = await supabase.from("categories").select("*").order("name");
       setCategories(seeded || []);
       return;
     }
