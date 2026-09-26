@@ -43,6 +43,7 @@ interface Profile {
 }
 
 export type UnitRole = "owner" | "manager" | "collaborator" | "viewer";
+export interface UnitPlan { plano: string; status_assinatura: string; data_vencimento: string | null }
 
 interface AuthContextType {
   user: User | null;
@@ -50,6 +51,10 @@ interface AuthContextType {
   profile: Profile | null;
   loading: boolean;
   unitRole: UnitRole | null;
+  unitPlan: UnitPlan | null;
+  inviteNotice: { unit_name: string; role: UnitRole } | null;
+  inviteExpired: boolean;
+  clearInviteNotice: () => void;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -62,16 +67,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [unitRole, setUnitRole] = useState<UnitRole | null>(null);
+  const [unitPlan, setUnitPlan] = useState<UnitPlan | null>(null);
+  const [inviteNotice, setInviteNotice] = useState<{ unit_name: string; role: UnitRole } | null>(null);
+  const [inviteExpired, setInviteExpired] = useState(false);
 
   const fetchProfile = async (userId: string) => {
-    const { data } = await supabase
+    let { data } = await supabase
       .from("profiles")
       .select("*")
       .eq("user_id", userId)
       .single();
+    if (data && (!data.onboarding_completed || !data.active_unit_id)) {
+      const { data: res } = await supabase.rpc("accept_my_pending_invite" as any);
+      const r = res as { accepted?: boolean; expired?: boolean; unit_name?: string; role?: string } | null;
+      if (r?.accepted) {
+        setInviteNotice({ unit_name: r.unit_name || "", role: (r.role || "collaborator") as UnitRole });
+        const again = await supabase.from("profiles").select("*").eq("user_id", userId).single();
+        data = again.data;
+      } else if (r?.expired) {
+        setInviteExpired(true);
+      }
+    }
     setProfile(data as Profile | null);
-    const { data: role } = await supabase.rpc("current_unit_role" as any);
+    const [{ data: role }, { data: plan }] = await Promise.all([
+      supabase.rpc("current_unit_role" as any),
+      supabase.rpc("current_unit_plan" as any),
+    ]);
     setUnitRole(((role as string) || "owner") as UnitRole);
+    setUnitPlan((plan as UnitPlan) || null);
   };
 
   const refreshProfile = async () => {
@@ -111,7 +134,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, profile, loading, unitRole, signOut, refreshProfile }}>
+    <AuthContext.Provider value={{ user, session, profile, loading, unitRole, unitPlan, inviteNotice, inviteExpired, clearInviteNotice: () => setInviteNotice(null), signOut, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );

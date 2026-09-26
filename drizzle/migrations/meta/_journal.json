@@ -36,6 +36,13 @@
       "when": 1790432743278,
       "tag": "0004_get_invite_preview",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1790453642980,
+      "tag": "0005_invite_autoaccept_and_own_business",
+      "breakpoints": true
     }
   ]
 }

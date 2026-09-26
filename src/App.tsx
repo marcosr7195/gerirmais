@@ -1,5 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
+import { BrowserRouter, Route, Routes, Navigate, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import { toast } from "sonner";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -29,7 +31,17 @@ import { RequireModule } from "@/components/RequireModule";
 const queryClient = new QueryClient();
 
 function AppRoutes() {
-  const { user, profile, loading } = useAuth();
+  const { user, profile, loading, inviteNotice, clearInviteNotice } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!inviteNotice) return;
+    const label = { owner: "Proprietário", manager: "Gerente", collaborator: "Colaborador", viewer: "Visualizador" }[inviteNotice.role];
+    toast.success(`Você entrou na equipe de ${inviteNotice.unit_name} como ${label}.`);
+    localStorage.removeItem(PENDING_INVITE_KEY);
+    navigate(inviteNotice.role === "collaborator" ? "/vendas" : "/", { replace: true });
+    clearInviteNotice();
+  }, [inviteNotice]);
 
   if (loading) {
     return (

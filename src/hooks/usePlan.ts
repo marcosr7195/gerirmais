@@ -56,11 +56,13 @@ export interface PlanState {
 }
 
 export function usePlan(): PlanState {
-  const { profile } = useAuth();
+  const { profile, unitPlan } = useAuth();
+  // O plano vem do proprietário do negócio ativo (membros usam o plano do dono)
+  const src: any = unitPlan ?? profile;
 
-  const plan = ((profile as any)?.plano ?? "pro") as PlanTier;
-  const status = ((profile as any)?.status_assinatura ?? "trial") as SubStatus;
-  const expiresAtStr = (profile as any)?.data_vencimento as string | null;
+  const plan = (src?.plano ?? "pro") as PlanTier;
+  const status = (src?.status_assinatura ?? "trial") as SubStatus;
+  const expiresAtStr = src?.data_vencimento as string | null;
   const expiresAt = expiresAtStr ? new Date(expiresAtStr) : null;
 
   const now = Date.now();
