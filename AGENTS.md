@@ -4,3 +4,4 @@
 - Papéis por unidade (owner/manager/collaborator/viewer) ficam em unit_members; RLS usa current_unit_role() — Vendas/Entregáveis liberam collaborator, transactions não; DELETE só owner.
 - Consultas do frontend em tabelas por unidade não filtram por user_id — o RLS delimita a unidade, e membros precisam ver os registros do dono.
 - Convites: RPCs invite/accept/list/update/remove_unit_member; link /convite/:token válido 7 dias, entregue por copiar/mailto (sem domínio de e-mail próprio).
+- Emails de autenticação compartilham o layout Gerir+ em pt-BR via branded-email.tsx — mantém os seis fluxos visuais consistentes.
