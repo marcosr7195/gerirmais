@@ -16,7 +16,7 @@ const serviceTypes = [
 ];
 
 export default function Onboarding() {
-  const { user, refreshProfile } = useAuth();
+  const { user, profile, refreshProfile, inviteExpired } = useAuth();
   const [businessName, setBusinessName] = useState("");
   const [serviceType, setServiceType] = useState("");
   const [document, setDocument] = useState("");
@@ -29,6 +29,16 @@ export default function Onboarding() {
       return;
     }
     setLoading(true);
+    if (!profile?.active_unit_id) {
+      const { data, error } = await supabase.rpc("create_my_business" as any, {
+        p_name: businessName.trim(), p_service_type: serviceType, p_document: document.trim() || null,
+      });
+      const res = data as { success: boolean; message?: string } | null;
+      if (error || !res?.success) toast.error(res?.message || "Erro ao salvar. Tente novamente.");
+      else { toast.success("Bem-vindo ao Gerir+!"); await refreshProfile(); }
+      setLoading(false);
+      return;
+    }
     const { error } = await supabase
       .from("profiles")
       .update({
@@ -42,7 +52,7 @@ export default function Onboarding() {
     if (error) {
       toast.error("Erro ao salvar. Tente novamente.");
     } else {
-      toast.success("Bem-vindo ao GereNow!");
+      toast.success("Bem-vindo ao Gerir+!");
       await refreshProfile();
     }
     setLoading(false);
@@ -59,6 +69,11 @@ export default function Onboarding() {
           <p className="text-muted-foreground text-sm">Precisamos de algumas informações para começar</p>
         </CardHeader>
         <CardContent>
+          {inviteExpired && (
+            <p className="mb-4 rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+              Seu convite expirou. Peça um novo ao responsável pelo negócio, ou crie o seu próprio negócio abaixo.
+            </p>
+          )}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label>Nome do negócio *</Label>
