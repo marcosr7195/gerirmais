@@ -1164,6 +1164,7 @@ export type Database = {
       current_unit_id: { Args: never; Returns: string }
       current_unit_owner: { Args: never; Returns: string }
       current_unit_role: { Args: never; Returns: string }
+      get_invite_preview: { Args: { p_token: string }; Returns: Json }
       get_vitrine_by_slug: { Args: { p_slug: string }; Returns: Json }
       invite_unit_member: {
         Args: { p_email: string; p_role: string }
