@@ -77,7 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .select("*")
       .eq("user_id", userId)
       .single();
-    if (data && (!data.onboarding_completed || !data.active_unit_id)) {
+    if (data) {
       const { data: res } = await supabase.rpc("accept_my_pending_invite" as any);
       const r = res as { accepted?: boolean; expired?: boolean; unit_name?: string; role?: string } | null;
       if (r?.accepted) {

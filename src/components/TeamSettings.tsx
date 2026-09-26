@@ -34,17 +34,30 @@ export function TeamSettings() {
   };
   useEffect(() => { load(); }, []);
 
+  const sendEmail = async (memberId: string) => {
+    const { data, error } = await supabase.functions.invoke("send-team-invite", { body: { member_id: memberId } });
+    if (error || !(data as any)?.sent) {
+      toast.error("Não foi possível enviar o e-mail. Copie o link e envie manualmente.");
+      return false;
+    }
+    toast.success("Convite enviado por e-mail.");
+    return true;
+  };
+
   const invite = async () => {
     setSending(true);
     const { data, error } = await supabase.rpc("invite_unit_member" as any, { p_email: email.trim(), p_role: role });
+    if (error) { setSending(false); return toast.error(error.message.includes("inválido") ? error.message : "Não foi possível convidar."); }
+    const token = data as string;
+    setLink(inviteLink(token));
+    const { data: list } = await supabase.rpc("list_unit_members" as any);
+    const rows = (list as Member[]) || [];
+    setMembers(rows);
+    const m = rows.find((r) => r.invite_token === token);
+    if (m) await sendEmail(m.id);
     setSending(false);
-    if (error) return toast.error(error.message.includes("inválido") ? error.message : "Não foi possível convidar.");
-    setLink(inviteLink(data as string));
-    load();
   };
 
-  const mailto = (to: string, url: string) =>
-    `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent("Convite para a equipe no Gerir+")}&body=${encodeURIComponent(`Você foi convidado para a equipe no Gerir+. Aceite pelo link (válido por 7 dias):\n\n${url}`)}`;
 
   const changeRole = async (id: string, r: UnitRole) => {
     const { error } = await supabase.rpc("update_unit_member_role" as any, { p_member: id, p_role: r });
@@ -80,9 +93,14 @@ export function TeamSettings() {
               ) : (
                 <>
                   {!m.accepted_at && m.invite_token && (
-                    <Button variant="ghost" size="icon" title="Copiar link" onClick={() => { navigator.clipboard.writeText(inviteLink(m.invite_token!)); toast.success("Link copiado."); }}>
-                      <Copy className="h-4 w-4" />
-                    </Button>
+                    <>
+                      <Button variant="ghost" size="icon" title="Reenviar convite por e-mail" onClick={() => sendEmail(m.id)}>
+                        <Mail className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" title="Copiar link" onClick={() => { navigator.clipboard.writeText(inviteLink(m.invite_token!)); toast.success("Link copiado."); }}>
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                    </>
                   )}
                   <Select value={m.role} onValueChange={(v) => changeRole(m.id, v as UnitRole)}>
                     <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
@@ -107,14 +125,11 @@ export function TeamSettings() {
           <DialogHeader><DialogTitle>Convidar membro</DialogTitle></DialogHeader>
           {link ? (
             <div className="space-y-3">
-              <p className="text-sm text-muted-foreground">Convite criado, válido por 7 dias. Envie o link para {email}:</p>
+              <p className="text-sm text-muted-foreground">Convite criado e enviado para {email} (válido por 7 dias). Se preferir, copie o link:</p>
               <Input readOnly value={link} onFocus={(e) => e.target.select()} />
-              <div className="flex gap-2">
-                <Button variant="outline" className="flex-1" onClick={() => { navigator.clipboard.writeText(link); toast.success("Link copiado."); }}>
-                  <Copy className="mr-1 h-4 w-4" /> Copiar link
-                </Button>
-                <Button asChild className="flex-1"><a href={mailto(email, link)}><Mail className="mr-1 h-4 w-4" /> Enviar por e-mail</a></Button>
-              </div>
+              <Button variant="outline" className="w-full" onClick={() => { navigator.clipboard.writeText(link); toast.success("Link copiado."); }}>
+                <Copy className="mr-1 h-4 w-4" /> Copiar link
+              </Button>
             </div>
           ) : (
             <div className="space-y-4">
