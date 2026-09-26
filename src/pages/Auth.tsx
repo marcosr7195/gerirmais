@@ -64,6 +64,19 @@ export default function Auth() {
         });
         if (error) throw error;
         if (data.session) return; // conta já ativa
+        if (data.user && data.user.identities?.length === 0) {
+          // e-mail já cadastrado: reenviar confirmação se ainda não confirmado
+          const { error: rErr } = await supabase.auth.resend({
+            type: "signup",
+            email,
+            options: { emailRedirectTo: redirectTo },
+          });
+          if (rErr) {
+            toast.info("Você já tem conta com este e-mail. Entre com sua senha.");
+            setIsLogin(true);
+            return;
+          }
+        }
         showPending(email);
       }
     } catch (err: any) {
