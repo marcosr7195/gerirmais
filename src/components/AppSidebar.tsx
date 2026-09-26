@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 import { canSeeModule, ROUTE_MODULES, ROLE_LABELS } from "@/lib/permissions";
 import { Separator } from "@/components/ui/separator";
+import { UnitSwitcher } from "@/components/UnitSwitcher";
 import logoCompletaAsset from "@/assets/logo-gerirmais-oficial.png.asset.json";
 import iconGAsset from "@/assets/icon-gerirmais.png.asset.json";
 import {
@@ -110,7 +111,8 @@ export function AppSidebar() {
             ) : (
               <div className="min-w-0 flex-1">
                 <img src={logoCompletaAsset.url} alt="Gerir+" className="h-10 w-auto object-contain" />
-                <p className="text-sidebar-foreground/60 text-xs truncate mt-1">{profile?.business_name || "Meu Negócio"}{unitRole && unitRole !== "owner" ? ` · ${ROLE_LABELS[unitRole]}` : ""}</p>
+                <UnitSwitcher />
+                {unitRole && unitRole !== "owner" && <p className="text-sidebar-foreground/60 text-xs truncate mt-1">{ROLE_LABELS[unitRole]}</p>}
               </div>
             )}
           </div>
