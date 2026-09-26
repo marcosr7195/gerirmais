@@ -151,7 +151,7 @@ export default function Vendas() {
     const { data, error } = await supabase
       .from("deals")
       .select("*, clients(*), deal_items(*), proposals(id, proposal_number, issue_date, total_value), service_orders(id, title, completed_at, created_at)")
-      .eq("user_id", user!.id)
+      
       .order("created_at", { ascending: false });
     if (error) { console.error("loadDeals error", error); toast.error("Erro ao carregar negócios"); return; }
 
@@ -195,7 +195,7 @@ export default function Vendas() {
   };
 
   const loadClients = async () => {
-    const { data } = await supabase.from("clients").select("*").eq("user_id", user!.id).order("name");
+    const { data } = await supabase.from("clients").select("*").order("name");
     setClients((data as Client[]) || []);
   };
 

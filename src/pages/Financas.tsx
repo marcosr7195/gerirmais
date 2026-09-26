@@ -100,7 +100,7 @@ export default function Financas() {
   }, []);
 
   const load = async () => {
-    const { data } = await supabase.from("transactions").select("*").eq("user_id", user!.id).order("date", { ascending: false });
+    const { data } = await supabase.from("transactions").select("*").order("date", { ascending: false });
     setTransactions((data || []).map(t => ({ ...t, amount: Number(t.amount) })));
   };
 

@@ -74,7 +74,7 @@ export function ProposalGenerator({ deal, open, onOpenChange }: { deal: Deal; op
       .from("proposals")
       .select("id, proposal_number, issue_date, total_value, created_at")
       .eq("deal_id", deal.id)
-      .eq("user_id", user!.id)
+      
       .order("created_at", { ascending: false });
     setProposals((data as Proposal[]) || []);
   };
@@ -83,7 +83,7 @@ export function ProposalGenerator({ deal, open, onOpenChange }: { deal: Deal; op
     const { count } = await supabase
       .from("proposals")
       .select("id", { count: "exact", head: true })
-      .eq("user_id", user!.id);
+      ;
     const n = (count || 0) + 1;
     return `PROP-${String(n).padStart(3, "0")}`;
   };
