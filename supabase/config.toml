@@ -5,3 +5,7 @@ project_id = "cnoqjiucrecktwsbhqts"
     verify_jwt = false
   [functions.kiwify-webhook]
     verify_jwt = false
+  [functions.preview-transactional-email]
+    verify_jwt = false
+  [functions.send-team-invite]
+    verify_jwt = true
