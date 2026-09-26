@@ -15,9 +15,20 @@
 - A mesma conta pode participar de vários negócios. Não é preciso sair da equipe nem criar outra conta.
 - Um **seletor de negócio** fica no topo do menu lateral, com a lista "Meus negócios" e "Equipes que participo". Ao trocar, a tela mostra os dados do negócio escolhido. Os dados de um negócio nunca aparecem em outro.
 - A opção **"Criar meu negócio"** abre o formulário de configuração (nome, tipo de serviço, CNPJ/CPF). A pessoa vira proprietária desse novo negócio, com acesso total, e continua na equipe onde já estava.
-- O plano e a assinatura de cada negócio seguem o plano da conta que é dona dele.
+
+## Regras de assinatura
+- **O plano pertence ao proprietário.** Membros da equipe usam o plano do dono daquele negócio e nunca herdam esse plano para os próprios negócios.
+- **Quem entra por convite** não recebe teste grátis no cadastro. Enquanto for apenas membro, não paga nada.
+- **Primeiro negócio próprio**: quem ainda não é proprietário de nenhum negócio ganha 14 dias grátis ao criar o primeiro. Depois disso, precisa assinar como proprietário, pela página Planos e pela Kiwify.
+- **Teste acabou sem assinatura**: o negócio próprio fica bloqueado para alterações até a assinatura. A participação em outras equipes continua normal.
+- **Limite de negócios por plano**: cada proprietário pode ter um número máximo de negócios, conforme o plano. Ao chegar no limite, "Criar meu negócio" mostra a opção de fazer upgrade.
+  - Starter: 1 negócio | Pro: 2 negócios | Scale: 5 negócios. Esses números são sugestões e precisam da sua confirmação.
 
 ## Detalhes técnicos
 - Nova função RPC `accept_my_pending_invite()` (SECURITY DEFINER, `search_path` fixo, uso só por usuários autenticados). Ela busca em `unit_members` o convite com `lower(email)` igual ao e-mail do usuário, `accepted_at IS NULL` e `expires_at > now()`, e usa a mesma lógica de `accept_unit_invite`. Retorna `{accepted, unit_name, role}` ou `{expired:true}`.
 - `AppRoutes` em App.tsx: antes de mostrar Onboarding a quem ainda não concluiu o cadastro, chama a RPC uma única vez. Com `accepted`, roda `refreshProfile()` e mostra um aviso. Com `expired`, o Onboarding exibe um alerta.
-- Regra registrada em AGENTS.md.
+- Hoje o cadastro cria automaticamente um negócio padrão para todo usuário novo. Para quem entra por convite, esse negócio não é criado e o plano fica `pendente`, sem teste grátis.
+- RPC `list_my_units()`: seletor que troca `profiles.active_unit_id`, validado por `validate_active_unit`.
+- RPC `create_my_business(name, service_type, document)`: confere o limite do plano, cria organization, unit e fiscal_entity e define o novo negócio como ativo. Na primeira vez como proprietário, começa o teste de 14 dias.
+- Verificações de plano (`usePlan`/FeatureGate) passam a usar o plano do dono da unidade ativa.
+- Regras registradas em AGENTS.md e na memória do projeto.
