@@ -11,6 +11,12 @@
 4. **Convite expirado**: aparece "Seu convite expirou, peça um novo ao responsável", junto com a opção de criar o próprio negócio.
 5. O link `/convite/...` continua funcionando como hoje.
 
+## Ter o próprio negócio depois (sem novo cadastro)
+- A mesma conta pode participar de vários negócios. Não é preciso sair da equipe nem criar outra conta.
+- Um **seletor de negócio** fica no topo do menu lateral, com a lista "Meus negócios" e "Equipes que participo". Ao trocar, a tela mostra os dados do negócio escolhido. Os dados de um negócio nunca aparecem em outro.
+- A opção **"Criar meu negócio"** abre o formulário de configuração (nome, tipo de serviço, CNPJ/CPF). A pessoa vira proprietária desse novo negócio, com acesso total, e continua na equipe onde já estava.
+- O plano e a assinatura de cada negócio seguem o plano da conta que é dona dele.
+
 ## Detalhes técnicos
 - Nova função RPC `accept_my_pending_invite()` (SECURITY DEFINER, `search_path` fixo, uso só por usuários autenticados). Ela busca em `unit_members` o convite com `lower(email)` igual ao e-mail do usuário, `accepted_at IS NULL` e `expires_at > now()`, e usa a mesma lógica de `accept_unit_invite`. Retorna `{accepted, unit_name, role}` ou `{expired:true}`.
 - `AppRoutes` em App.tsx: antes de mostrar Onboarding a quem ainda não concluiu o cadastro, chama a RPC uma única vez. Com `accepted`, roda `refreshProfile()` e mostra um aviso. Com `expired`, o Onboarding exibe um alerta.
