@@ -1,4 +1,7 @@
 project_id = "cnoqjiucrecktwsbhqts"
 
-[functions.kiwify-webhook]
-verify_jwt = false
+[functions]
+  [functions.auth-email-hook]
+    verify_jwt = false
+  [functions.kiwify-webhook]
+    verify_jwt = false
